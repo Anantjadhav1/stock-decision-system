@@ -87,9 +87,21 @@ class Engine:
             short = "SELL"
         else:
             short = "HOLD"
-        long_v = "BUY"
-        final  = "STRONG BUY"  if short == "BUY"  and long_v == "BUY"  else \
-                 "STRONG SELL" if short == "SELL" and long_v == "SELL" else "HOLD"
+
+        # Long term: based on whether current price is above or below long MA
+        long_v = "BUY" if prices[-1] > long_ma else "SELL"
+
+        # Final verdict — all 5 combinations covered
+        if short == "BUY" and long_v == "BUY":
+            final = "STRONG BUY"
+        elif short == "BUY" and long_v == "SELL":
+            final = "BUY"           # short term good, long term weak — cautious buy
+        elif short == "SELL" and long_v == "SELL":
+            final = "STRONG SELL"
+        elif short == "SELL" and long_v == "BUY":
+            final = "SELL"          # short term bad, long term ok — exit signal
+        else:
+            final = "HOLD"          # short == HOLD, mixed signals
         return {'short_ma': short_ma, 'long_ma': long_ma, 'trend': trend,
                 'momentum': momentum, 'dip': dip, 'dip_pct': abs(dip_pct),
                 'short': short, 'long': long_v, 'final': final}
@@ -173,8 +185,14 @@ def backtest():
             long_ma  = sum(window) / 6
             trend    = "BULLISH" if short_ma > long_ma else "BEARISH"
             momentum = "UPWARD"  if window[-1] > window[-2] else "DOWNWARD"
-            signal   = "BUY"  if trend == "BULLISH" and momentum == "UPWARD" else \
-                       "SELL" if trend == "BEARISH" and momentum == "DOWNWARD" else "HOLD"
+            long_v   = "BUY" if window[-1] > long_ma else "SELL"
+
+            if trend == "BULLISH" and momentum == "UPWARD" and long_v == "BUY":
+                signal = "BUY"
+            elif trend == "BEARISH" and momentum == "DOWNWARD" and long_v == "SELL":
+                signal = "SELL"
+            else:
+                signal = "HOLD"
             price = closes[i]
             date  = dates[i]
 
@@ -278,8 +296,13 @@ def get_portfolio():
 
 @app.route('/top')
 def top_stocks():
-    sample = ["RELIANCE.NS","TCS.NS","INFY.NS","HDFCBANK.NS","ITC.NS",
-              "WIPRO.NS","BAJFINANCE.NS","TATAMOTORS.NS"]
+    sample = [
+    "RELIANCE.NS", "TCS.NS",       "HDFCBANK.NS",  "INFY.NS",
+    "ICICIBANK.NS","HINDUNILVR.NS","SBIN.NS",       "BAJFINANCE.NS",
+    "KOTAKBANK.NS","BHARTIARTL.NS","ITC.NS",        "LT.NS",
+    "AXISBANK.NS", "MARUTI.NS",    "WIPRO.NS",      "HCLTECH.NS",
+    "SUNPHARMA.NS","NTPC.NS",      "POWERGRID.NS",  "TITAN.NS"
+]
     heap = []
     for s in sample:
         try:
