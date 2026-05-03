@@ -16,3 +16,9 @@ A real-time stock analysis terminal built with Flask, Data Structures, and ML.
 pip install flask yfinance
 python app.py
 # Open http://localhost:5000
+
+
+git status
+git add .......
+git commit -m "message here"
+git push origin main
