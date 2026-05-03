@@ -52,8 +52,6 @@ body {
     radial-gradient(ellipse 60% 40% at 80% 0%, rgba(26,107,94,.05) 0%, transparent 60%),
     radial-gradient(ellipse 40% 30% at 0% 80%, rgba(26,74,122,.04) 0%, transparent 50%);
 }
-
-/* subtle paper grain */
 body::before {
   content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.35;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
@@ -69,22 +67,13 @@ nav {
   display:flex; align-items:center; padding:0 28px;
   box-shadow:0 1px 0 rgba(26,23,20,.04);
 }
-.nav-logo {
-  font-family:var(--serif); font-size:20px; color:var(--ink); letter-spacing:-.01em;
-  margin-right:40px; display:flex; align-items:baseline; gap:1px;
-}
+.nav-logo { font-family:var(--serif); font-size:20px; color:var(--ink); letter-spacing:-.01em; margin-right:40px; display:flex; align-items:baseline; gap:1px; }
 .nav-logo em { font-style:italic; color:var(--teal); }
 .nav-logo sup { font-family:var(--mono); font-size:8px; color:var(--ink4); font-style:normal; vertical-align:super; margin-left:2px; letter-spacing:.08em; }
-
 .nav-links { display:flex; gap:1px; }
-.nav-btn {
-  background:none; border:none; color:var(--ink3); font-family:var(--mono);
-  font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:8px 14px;
-  cursor:pointer; border-radius:6px; transition:all .15s;
-}
+.nav-btn { background:none; border:none; color:var(--ink3); font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:8px 14px; cursor:pointer; border-radius:6px; transition:all .15s; }
 .nav-btn:hover { color:var(--ink); background:var(--paper); }
 .nav-btn.active { color:var(--teal); background:var(--teal-lt); font-weight:500; }
-
 .nav-right { display:flex; align-items:center; margin-left:auto; gap:12px; }
 .nav-status { display:flex; align-items:center; gap:6px; }
 .nav-dot { width:6px; height:6px; background:var(--teal); border-radius:50%; animation:pulse-dot 2.5s ease infinite; }
@@ -97,20 +86,13 @@ nav {
 .page.active { display:block; animation:pageIn .35s cubic-bezier(.22,1,.36,1); }
 @keyframes pageIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
-/* ── COMMON COMPONENTS ── */
-.section-label {
-  font-family:var(--mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--ink4); margin-bottom:22px; display:flex; align-items:center; gap:10px;
-}
+/* ── COMMON ── */
+.section-label { font-family:var(--mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink4); margin-bottom:22px; display:flex; align-items:center; gap:10px; }
 .section-label::before { content:''; width:16px; height:1px; background:var(--border2); }
 .section-label::after  { content:''; flex:1; height:1px; background:var(--border); }
 
-.card {
-  background:#fff; border:1px solid var(--border); border-radius:var(--r);
-  padding:24px; box-shadow:var(--shadow-sm);
-}
+.card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:24px; box-shadow:var(--shadow-sm); }
 
-/* Buttons */
 .btn { padding:12px 20px; border:none; border-radius:8px; font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:.1em; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
 .btn-primary { background:var(--ink); color:#fff; }
 .btn-primary:hover { background:var(--teal); box-shadow:0 4px 16px rgba(26,107,94,.25); transform:translateY(-1px); }
@@ -121,18 +103,14 @@ nav {
 .btn-danger { background:#fff; color:var(--rose); border:1px solid var(--rose-md); font-size:10px; }
 .btn-danger:hover { background:var(--rose-lt); }
 
-/* Inputs */
-.input-field {
-  background:#fff; border:1.5px solid var(--border); color:var(--ink);
-  font-family:var(--mono); font-size:13px; padding:12px 16px; border-radius:8px;
-  outline:none; letter-spacing:.04em; transition:all .15s; text-transform:uppercase; width:100%;
-  box-shadow:var(--shadow-sm);
-}
+.input-field { background:#fff; border:1.5px solid var(--border); color:var(--ink); font-family:var(--mono); font-size:13px; padding:12px 16px; border-radius:8px; outline:none; letter-spacing:.04em; transition:all .15s; text-transform:uppercase; width:100%; box-shadow:var(--shadow-sm); }
 .input-field:focus { border-color:var(--teal); box-shadow:0 0 0 3px rgba(26,107,94,.1); }
 .input-field::placeholder { color:var(--ink4); text-transform:none; font-size:12px; letter-spacing:0; }
 
 .error-box { display:none; background:var(--rose-lt); border:1px solid var(--rose-md); color:var(--rose); font-family:var(--mono); font-size:11px; padding:12px 16px; border-radius:8px; letter-spacing:.04em; }
 .error-box.show { display:block; }
+.warn-box  { display:none; background:var(--amber-lt); border:1px solid var(--amber-md); color:var(--amber); font-family:var(--mono); font-size:11px; padding:12px 16px; border-radius:8px; letter-spacing:.04em; margin-bottom:14px; }
+.warn-box.show  { display:block; }
 
 .loading-bar { display:none; height:2px; background:var(--paper); border-radius:2px; margin:14px 0; overflow:hidden; }
 .loading-bar.show { display:block; }
@@ -142,65 +120,42 @@ nav {
 .loading-text.show { display:block; }
 @keyframes fade-pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
 
-/* Signal colors */
 .c-green { color:var(--teal); }
 .c-red   { color:var(--rose); }
 .c-amber { color:var(--amber); }
 .c-blue  { color:var(--blue); }
 
-/* Badges */
 .badge { font-family:var(--mono); font-size:9px; font-weight:500; padding:3px 10px; border-radius:4px; border:1px solid; letter-spacing:.06em; display:inline-block; }
 .badge.green { color:var(--teal);  border-color:var(--teal-md);  background:var(--teal-lt); }
 .badge.red   { color:var(--rose);  border-color:var(--rose-md);  background:var(--rose-lt); }
 .badge.amber { color:var(--amber); border-color:var(--amber-md); background:var(--amber-lt); }
 .badge.blue  { color:var(--blue);  border-color:#c0d0e8;         background:var(--blue-lt); }
+.badge.grey  { color:var(--ink3);  border-color:var(--border);   background:var(--paper); }
 
-/* ── ANALYZE PAGE ── */
+/* ── ANALYZE ── */
 .analyze-top { display:grid; grid-template-columns:1fr 320px; gap:16px; margin-bottom:16px; }
-
-.search-panel {
-  background:#fff; border:1px solid var(--border); border-radius:var(--r);
-  padding:32px; position:relative; overflow:hidden; box-shadow:var(--shadow);
-}
-.search-panel::after {
-  content:''; position:absolute; top:-80px; right:-80px;
-  width:280px; height:280px;
-  background:radial-gradient(circle, rgba(26,107,94,.07) 0%, transparent 70%);
-  pointer-events:none;
-}
+.search-panel { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:32px; position:relative; overflow:hidden; box-shadow:var(--shadow); }
+.search-panel::after { content:''; position:absolute; top:-80px; right:-80px; width:280px; height:280px; background:radial-gradient(circle, rgba(26,107,94,.07) 0%, transparent 70%); pointer-events:none; }
 .search-eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); margin-bottom:10px; }
 .search-title { font-family:var(--serif); font-size:30px; line-height:1.1; color:var(--ink); margin-bottom:6px; }
 .search-title em { color:var(--teal); }
 .search-sub { font-family:var(--mono); font-size:10px; color:var(--ink4); margin-bottom:26px; }
-
 .input-row { display:flex; gap:8px; }
 .quick-picks { margin-top:14px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
 .qlabel { font-family:var(--mono); font-size:9px; color:var(--ink4); }
-.qpick {
-  background:var(--paper); border:1px solid var(--border); color:var(--ink3);
-  font-family:var(--mono); font-size:9px; padding:5px 11px; border-radius:5px;
-  cursor:pointer; transition:all .12s;
-}
+.qpick { background:var(--paper); border:1px solid var(--border); color:var(--ink3); font-family:var(--mono); font-size:9px; padding:5px 11px; border-radius:5px; cursor:pointer; transition:all .12s; }
 .qpick:hover { border-color:var(--teal); color:var(--teal); background:var(--teal-lt); }
 
-.status-panel {
-  background:var(--ivory); border:1px solid var(--border); border-radius:var(--r); padding:24px;
-}
+.status-panel { background:var(--ivory); border:1px solid var(--border); border-radius:var(--r); padding:24px; }
 .status-head { font-family:var(--serif); font-size:16px; color:var(--ink); padding-bottom:14px; border-bottom:1px solid var(--border); margin-bottom:14px; }
 .stat-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .stat-key { font-family:var(--mono); font-size:9px; color:var(--ink4); letter-spacing:.08em; text-transform:uppercase; }
 .stat-val { font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink); }
 
-/* Verdict */
 .verdict-wrap { margin-bottom:16px; }
-.verdict-box {
-  background:#fff; border:1px solid var(--border); border-radius:var(--r);
-  padding:28px 32px; display:flex; align-items:center; justify-content:space-between;
-  position:relative; overflow:hidden; box-shadow:var(--shadow);
-}
+.verdict-box { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:28px 32px; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden; box-shadow:var(--shadow); }
 .verdict-box::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:var(--r) 0 0 var(--r); }
 .verdict-box::after { content:''; position:absolute; top:0; left:4px; right:0; height:2px; opacity:.15; }
-
 .verdict-box.strong-buy  { border-color:var(--teal-md); }
 .verdict-box.strong-buy::before { background:var(--teal); }
 .verdict-box.strong-buy::after  { background:var(--teal); }
@@ -210,13 +165,11 @@ nav {
 .verdict-box.hold::before        { background:var(--amber); }
 .verdict-box.strong-sell { border-color:var(--rose-md); }
 .verdict-box.strong-sell::before { background:var(--rose); }
-
 .v-left { display:flex; flex-direction:column; gap:5px; }
 .v-sym  { font-family:var(--mono); font-size:9px; color:var(--ink4); letter-spacing:.2em; text-transform:uppercase; }
 .v-name { font-size:13px; color:var(--ink3); }
 .v-price { font-family:var(--mono); font-size:36px; font-weight:300; line-height:1; color:var(--ink); }
 .v-price span { font-size:12px; color:var(--ink4); font-weight:400; }
-
 .v-right { text-align:right; }
 .v-label { font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--ink4); text-transform:uppercase; margin-bottom:8px; }
 .v-text { font-family:var(--serif); font-size:40px; font-weight:400; line-height:1; animation:popIn .45s cubic-bezier(.34,1.56,.64,1); }
@@ -226,20 +179,17 @@ nav {
 .v-text.amber { color:var(--amber); }
 .v-chips { margin-top:10px; display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
 
-/* Metrics */
 .metrics-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
 .metric-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:20px; box-shadow:var(--shadow-sm); }
 .metric-label { font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink4); margin-bottom:10px; }
 .metric-val { font-family:var(--mono); font-size:22px; font-weight:300; line-height:1; color:var(--ink); }
 .metric-sub { font-family:var(--mono); font-size:9px; color:var(--ink4); margin-top:6px; }
 
-/* Chart */
 .chart-panel { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:22px; margin-bottom:12px; box-shadow:var(--shadow-sm); }
 .chart-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
 .chart-title { font-family:var(--mono); font-size:9px; letter-spacing:.12em; color:var(--ink4); text-transform:uppercase; }
 .chart-wrap { position:relative; height:200px; }
 
-/* Signals */
 .signals-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:10px; }
 .signal-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow-sm); }
 .signal-name { font-family:var(--mono); font-size:9px; color:var(--ink4); letter-spacing:.12em; text-transform:uppercase; }
@@ -249,13 +199,11 @@ nav {
 .signal-val.amber { color:var(--amber); background:var(--amber-lt); }
 .signal-val.blue  { color:var(--blue);  background:var(--blue-lt);  }
 
-/* Fundamentals */
 .fund-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .fund-row  { background:var(--ivory); border:1px solid var(--border); border-radius:8px; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; }
 .fund-key  { font-family:var(--mono); font-size:9px; color:var(--ink4); text-transform:uppercase; letter-spacing:.08em; }
 .fund-val  { font-family:var(--mono); font-size:12px; font-weight:500; color:var(--ink); }
 
-/* ── ML INFO BAR ── */
 .ml-info-bar { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:12px; }
 .ml-info-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; display:flex; flex-direction:column; gap:5px; box-shadow:var(--shadow-sm); }
 .ml-info-label { font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink4); }
@@ -263,7 +211,6 @@ nav {
 .ml-info-val.risk-high   { color:var(--rose); }
 .ml-info-val.risk-medium { color:var(--amber); }
 .ml-info-val.risk-low    { color:var(--teal); }
-/* Reason box */
 .reason-box { background:var(--ivory); border:1px solid var(--border); border-radius:var(--r); padding:14px 18px; margin-bottom:12px; box-shadow:var(--shadow-sm); display:flex; align-items:flex-start; gap:12px; }
 .reason-icon { font-size:14px; flex-shrink:0; margin-top:2px; }
 .reason-body { display:flex; flex-direction:column; gap:3px; }
@@ -287,11 +234,7 @@ nav {
 /* ── TOP STOCKS ── */
 .top-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
 .top-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
-.top-card {
-  background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:22px;
-  cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
-  box-shadow:var(--shadow-sm);
-}
+.top-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:22px; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; box-shadow:var(--shadow-sm); }
 .top-card:hover { border-color:var(--teal-md); box-shadow:var(--shadow-lg); transform:translateY(-3px); }
 .top-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--teal),var(--teal2)); opacity:0; transition:opacity .2s; }
 .top-card:hover::before { opacity:1; }
@@ -315,19 +258,40 @@ nav {
 
 /* ── BACKTEST ── */
 .bt-controls { display:grid; grid-template-columns:1fr 1fr auto; gap:12px; align-items:end; margin-bottom:22px; }
-.bt-label { font-family:var(--mono); font-size:9px; color:var(--ink4); letter-spacing:.12em; margin-bottom:8px; text-transform:uppercase; }
+.bt-label  { font-family:var(--mono); font-size:9px; color:var(--ink4); letter-spacing:.12em; margin-bottom:8px; text-transform:uppercase; }
 .bt-select { background:#fff; border:1.5px solid var(--border); color:var(--ink); font-family:var(--mono); font-size:13px; padding:12px 16px; border-radius:8px; outline:none; cursor:pointer; width:100%; box-shadow:var(--shadow-sm); }
 .bt-select:focus { border-color:var(--teal); }
+
 .bt-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
-.bt-stat { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:22px; text-align:center; box-shadow:var(--shadow-sm); }
+.bt-stat  { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:22px; text-align:center; box-shadow:var(--shadow-sm); }
 .bt-stat-val { font-family:var(--mono); font-size:30px; font-weight:300; line-height:1; margin-bottom:8px; color:var(--ink); }
 .bt-stat-key { font-family:var(--mono); font-size:9px; letter-spacing:.14em; color:var(--ink4); text-transform:uppercase; }
+
+/* Strategy info box */
+.bt-strategy-box {
+  background:var(--teal-lt); border:1px solid var(--teal-md); border-radius:var(--r);
+  padding:16px 20px; margin-bottom:16px;
+  display:flex; gap:16px; align-items:flex-start;
+}
+.bt-strategy-icon { font-size:18px; flex-shrink:0; }
+.bt-strategy-text { font-family:var(--mono); font-size:10px; color:var(--teal); line-height:1.8; letter-spacing:.04em; }
+.bt-strategy-text strong { font-size:11px; display:block; margin-bottom:4px; color:var(--teal); letter-spacing:.1em; }
+
 .bt-chart-wrap { position:relative; height:220px; }
 .bt-trades { margin-top:16px; }
-.bt-trade-head { display:grid; grid-template-columns:1.5fr 1.5fr 1fr 1fr 1fr 1fr; padding:10px 18px; background:var(--ivory); border-radius:8px 8px 0 0; border:1px solid var(--border); font-family:var(--mono); font-size:9px; letter-spacing:.12em; color:var(--ink4); text-transform:uppercase; }
-.bt-trade-row  { display:grid; grid-template-columns:1.5fr 1.5fr 1fr 1fr 1fr 1fr; padding:11px 18px; border:1px solid var(--paper); border-top:none; font-family:var(--mono); font-size:11px; color:var(--ink2); transition:background .12s; background:#fff; }
+.bt-trade-head { display:grid; grid-template-columns:1.4fr 1.4fr .9fr .9fr .8fr .8fr .9fr; padding:10px 18px; background:var(--ivory); border-radius:8px 8px 0 0; border:1px solid var(--border); font-family:var(--mono); font-size:9px; letter-spacing:.12em; color:var(--ink4); text-transform:uppercase; }
+.bt-trade-row  { display:grid; grid-template-columns:1.4fr 1.4fr .9fr .9fr .8fr .8fr .9fr; padding:11px 18px; border:1px solid var(--paper); border-top:none; font-family:var(--mono); font-size:11px; color:var(--ink2); transition:background .12s; background:#fff; }
 .bt-trade-row:last-child { border-radius:0 0 8px 8px; }
 .bt-trade-row:hover { background:var(--cream); }
+
+/* exit reason badge colours */
+.exit-tp    { color:var(--teal);  background:var(--teal-lt);  border-color:var(--teal-md); }
+.exit-sl    { color:var(--rose);  background:var(--rose-lt);  border-color:var(--rose-md); }
+.exit-rsi   { color:var(--amber); background:var(--amber-lt); border-color:var(--amber-md); }
+.exit-macd  { color:var(--blue);  background:var(--blue-lt);  border-color:#c0d0e8; }
+.exit-ema   { color:var(--ink3);  background:var(--paper);    border-color:var(--border); }
+.exit-open  { color:var(--teal);  background:var(--teal-lt);  border-color:var(--teal-md); }
+.exit-other { color:var(--ink4);  background:var(--paper);    border-color:var(--border); }
 
 /* ── COMPARE ── */
 .cmp-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:22px; }
@@ -336,19 +300,10 @@ nav {
 .cmp-grid { display:grid; gap:12px; }
 .cmp-grid.cols-2 { grid-template-columns:1fr 1fr; }
 .cmp-grid.cols-3 { grid-template-columns:1fr 1fr 1fr; }
-
-.cmp-card {
-  background:#fff; border:1px solid var(--border); border-radius:var(--r);
-  padding:24px; position:relative; overflow:hidden; box-shadow:var(--shadow-sm);
-  transition:box-shadow .2s;
-}
+.cmp-card { background:#fff; border:1px solid var(--border); border-radius:var(--r); padding:24px; position:relative; overflow:hidden; box-shadow:var(--shadow-sm); transition:box-shadow .2s; }
 .cmp-card:hover { box-shadow:var(--shadow); }
 .cmp-card.rank-1 { border-color:var(--teal-md); box-shadow:0 2px 20px rgba(26,107,94,.1), 0 0 0 1px var(--teal-md); }
-.cmp-card.rank-1::before {
-  content:'★ BEST PICK'; position:absolute; top:0; right:0;
-  background:var(--teal); color:#fff; font-family:var(--mono); font-size:8px;
-  font-weight:500; padding:5px 12px; border-radius:0 var(--r) 0 8px; letter-spacing:.08em;
-}
+.cmp-card.rank-1::before { content:'★ BEST PICK'; position:absolute; top:0; right:0; background:var(--teal); color:#fff; font-family:var(--mono); font-size:8px; font-weight:500; padding:5px 12px; border-radius:0 var(--r) 0 8px; letter-spacing:.08em; }
 .cmp-sym   { font-family:var(--serif); font-size:22px; font-weight:400; margin-bottom:2px; color:var(--ink); }
 .cmp-name  { font-size:12px; color:var(--ink3); margin-bottom:16px; }
 .cmp-price { font-family:var(--mono); font-size:28px; font-weight:300; margin-bottom:14px; color:var(--ink); }
@@ -362,12 +317,10 @@ nav {
 .cmp-track { height:5px; background:var(--paper); border-radius:6px; overflow:hidden; }
 .cmp-fill  { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--teal2),var(--teal)); transition:width 1s cubic-bezier(.22,1,.36,1); }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-track { background:var(--cream); }
 ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
-/* ── RESPONSIVE ── */
 @media(max-width:768px) {
   .analyze-top,.metrics-row,.signals-row,.fund-grid,.bt-stats { grid-template-columns:1fr; }
   .cmp-grid.cols-2,.cmp-grid.cols-3 { grid-template-columns:1fr; }
@@ -431,7 +384,7 @@ nav {
       <div class="stat-row"><span class="stat-key">Engine</span><span class="stat-val c-green">ONLINE</span></div>
       <div class="stat-row"><span class="stat-key">Data Source</span><span class="stat-val">YAHOO FINANCE</span></div>
       <div class="stat-row"><span class="stat-key">ML Model</span><span class="stat-val">RANDOM FOREST</span></div>
-    <div class="stat-row"><span class="stat-key">DS Engine</span><span class="stat-val">Array+Minheap+Hashmap+BoundedQueue</span></div>
+      <div class="stat-row"><span class="stat-key">DS Engine</span><span class="stat-val">Array+Minheap+Hashmap+BoundedQueue</span></div>
       <div class="stat-row"><span class="stat-key">Last Scan</span><span class="stat-val" id="last-scan">—</span></div>
       <div class="stat-row"><span class="stat-key">Total Scans</span><span class="stat-val" id="scan-count">0</span></div>
     </div>
@@ -457,27 +410,13 @@ nav {
       </div>
     </div>
 
-    <!-- ML Info Bar: Confidence · Risk · Accuracy · RSI -->
     <div class="ml-info-bar">
-      <div class="ml-info-card">
-        <div class="ml-info-label">ML Confidence</div>
-        <div class="ml-info-val" id="r-confidence">—</div>
-      </div>
-      <div class="ml-info-card">
-        <div class="ml-info-label">Risk Level</div>
-        <div class="ml-info-val" id="r-risk">—</div>
-      </div>
-      <div class="ml-info-card">
-        <div class="ml-info-label">Model Accuracy</div>
-        <div class="ml-info-val" id="r-accuracy">—</div>
-      </div>
-      <div class="ml-info-card">
-        <div class="ml-info-label">RSI (14-Day)</div>
-        <div class="ml-info-val" id="r-rsi">—</div>
-      </div>
+      <div class="ml-info-card"><div class="ml-info-label">ML Confidence</div><div class="ml-info-val" id="r-confidence">—</div></div>
+      <div class="ml-info-card"><div class="ml-info-label">Risk Level</div><div class="ml-info-val" id="r-risk">—</div></div>
+      <div class="ml-info-card"><div class="ml-info-label">Model Accuracy</div><div class="ml-info-val" id="r-accuracy">—</div></div>
+      <div class="ml-info-card"><div class="ml-info-label">RSI (14-Day)</div><div class="ml-info-val" id="r-rsi">—</div></div>
     </div>
 
-    <!-- Reason / Explainability -->
     <div class="reason-box">
       <div class="reason-icon">💡</div>
       <div class="reason-body">
@@ -487,21 +426,9 @@ nav {
     </div>
 
     <div class="metrics-row">
-      <div class="metric-card">
-        <div class="metric-label">ML PREDICTION</div>
-        <div class="metric-val" id="r-pred">—</div>
-        <div class="metric-sub" id="r-pred-dir"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">SHORT MA (5-DAY)</div>
-        <div class="metric-val" id="r-sma">—</div>
-        <div class="metric-sub">Avg of last 5 closes</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">LONG MA (20-DAY)</div>
-        <div class="metric-val" id="r-lma">—</div>
-        <div class="metric-sub">Avg of last 20 closes</div>
-      </div>
+      <div class="metric-card"><div class="metric-label">ML PREDICTION</div><div class="metric-val" id="r-pred">—</div><div class="metric-sub" id="r-pred-dir"></div></div>
+      <div class="metric-card"><div class="metric-label">SHORT MA (5-DAY)</div><div class="metric-val" id="r-sma">—</div><div class="metric-sub">Avg of last 5 closes</div></div>
+      <div class="metric-card"><div class="metric-label">LONG MA (20-DAY)</div><div class="metric-val" id="r-lma">—</div><div class="metric-sub">Avg of last 20 closes</div></div>
     </div>
 
     <div class="chart-panel">
@@ -550,6 +477,7 @@ nav {
 <!-- ════════════════════ BACKTEST ════════════════════ -->
 <div class="page" id="page-backtest">
   <div class="section-label">Strategy Backtesting</div>
+
   <div class="bt-controls">
     <div>
       <div class="bt-label">Stock Symbol</div>
@@ -558,15 +486,28 @@ nav {
     <div>
       <div class="bt-label">Time Period</div>
       <select class="bt-select" id="bt-period">
-        <option value="3mo">3 Months</option>
-        <option value="6mo" selected>6 Months</option>
-        <option value="1y">1 Year</option>
+        <option value="6mo">6 Months</option>
+        <option value="1y" selected>1 Year</option>
+        <option value="2y">2 Years</option>
+        <option value="5y">5 Years</option>
       </select>
     </div>
     <button class="btn btn-primary" id="bt-btn" onclick="runBacktest()">RUN BACKTEST</button>
   </div>
+
+  <!-- Strategy description -->
+  <div class="bt-strategy-box">
+    <div class="bt-strategy-icon">🧠</div>
+    <div class="bt-strategy-text">
+      <strong>MULTI-INDICATOR CONFLUENCE STRATEGY</strong>
+      BUY when 3 of 4 conditions align: EMA20 &gt; EMA50 (uptrend) · RSI 35–65 (healthy zone) · MACD above signal · Price above EMA20<br>
+      EXIT via: 6% take-profit · ATR trailing stop · RSI overbought (&gt;72) · MACD bearish cross · EMA breakdown · 30-day timeout
+    </div>
+  </div>
+
   <div class="loading-bar" id="bt-lbar"><div class="loading-fill"></div></div>
   <div class="loading-text" id="bt-ltxt" style="margin-bottom:10px;">RUNNING STRATEGY SIMULATION...</div>
+  <div class="warn-box" id="bt-warn"></div>
   <div class="error-box" id="bt-err" style="margin-bottom:14px;"></div>
 
   <div id="bt-results" style="display:none;">
@@ -581,7 +522,7 @@ nav {
       <div class="bt-trade-head">
         <span>BUY DATE</span><span>SELL DATE</span>
         <span>BUY ₹</span><span>SELL ₹</span>
-        <span>P&L %</span><span>RESULT</span>
+        <span>P&amp;L %</span><span>RESULT</span><span>EXIT</span>
       </div>
       <div id="bt-trade-list"></div>
     </div>
@@ -719,19 +660,15 @@ function renderAnalyze(d){
   if(d['52w_high']&&d['52w_low'])
     document.getElementById('r-52w').textContent=`52W: ₹${fmt(d['52w_low'])} / ₹${fmt(d['52w_high'])}`;
 
-  // ML Info Bar
   document.getElementById('r-confidence').textContent = d.confidence || '—';
   const riskEl = document.getElementById('r-risk');
   riskEl.textContent = d.risk || '—';
   riskEl.className = 'ml-info-val risk-'+(d.risk||'').toLowerCase();
   document.getElementById('r-accuracy').textContent = d.accuracy || '—';
   document.getElementById('r-rsi').textContent = d.rsi != null ? d.rsi : '—';
-
-  // Reason
   document.getElementById('r-reason').textContent = d.reason || '—';
 
   drawPriceChart(d.prices,d.prediction);
-
   setSig('r-trend',d.trend); setSig('r-momentum',d.momentum); setSig('r-dip',d.dip);
   setSig('r-short',d.short); setSig('r-long',d.long);
   document.getElementById('r-sector').textContent=d.sector||'N/A';
@@ -872,6 +809,7 @@ async function runBacktest(){
   const period=document.getElementById('bt-period').value;
   const btn=document.getElementById('bt-btn');
   btn.disabled=true; setLoading('bt',true); clearError('bt-err');
+  const wb=document.getElementById('bt-warn'); wb.classList.remove('show');
   document.getElementById('bt-results').style.display='none';
   if(btChart){btChart.destroy();btChart=null;}
   try {
@@ -882,28 +820,69 @@ async function runBacktest(){
   finally{btn.disabled=false; setLoading('bt',false);}
 }
 
+function exitBadge(r){
+  if(!r) return '';
+  const map={
+    'TAKE-PROFIT': ['TP',  'exit-tp'],
+    'TRAIL-STOP':  ['SL',  'exit-sl'],
+    'RSI-EXIT':    ['RSI', 'exit-rsi'],
+    'MACD-EXIT':   ['MACD','exit-macd'],
+    'EMA-EXIT':    ['EMA', 'exit-ema'],
+    'OPEN':        ['OPEN','exit-open'],
+    'TIMEOUT':     ['TMO', 'exit-other'],
+  };
+  const [label,cls] = map[r] || [r,'exit-other'];
+  return `<span class="badge ${cls}" style="font-size:8px;padding:2px 7px;">${label}</span>`;
+}
+
 function renderBacktest(d){
   document.getElementById('bt-results').style.display='block';
-  const wrClr=d.win_rate>=60?'var(--teal)':d.win_rate>=40?'var(--amber)':'var(--rose)';
-  const retClr=d.total_return>=0?'var(--teal)':'var(--rose)';
+
+  // Low-trade warning
+  const wb=document.getElementById('bt-warn');
+  if(d.total_trades < 5){
+    wb.textContent=`⚠ Only ${d.total_trades} trade${d.total_trades===1?'':'s'} found. Results may not be statistically significant — try a longer period like 2 Years.`;
+    wb.classList.add('show');
+  }
+
+  const wrClr = d.win_rate>=60?'var(--teal)':d.win_rate>=40?'var(--amber)':'var(--rose)';
+  const retClr = d.total_return>=0?'var(--teal)':'var(--rose)';
+  const avgClr = d.avg_return>=0?'var(--teal)':'var(--rose)';
+
   document.getElementById('bt-stats').innerHTML=`
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${wrClr}">${d.win_rate}%</div><div class="bt-stat-key">Win Rate</div></div>
-    <div class="bt-stat"><div class="bt-stat-val">${d.total_trades}</div><div class="bt-stat-key">Total Trades</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:var(--teal)">${d.wins}</div><div class="bt-stat-key">Wins</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${retClr}">${d.total_return>0?'+':''}${d.total_return}%</div><div class="bt-stat-key">Total Return</div></div>`;
+    <div class="bt-stat">
+      <div class="bt-stat-val" style="color:${wrClr}">${d.win_rate}%</div>
+      <div class="bt-stat-key">Win Rate</div>
+    </div>
+    <div class="bt-stat">
+      <div class="bt-stat-val">${d.total_trades}</div>
+      <div class="bt-stat-key">Total Trades</div>
+    </div>
+    <div class="bt-stat">
+      <div class="bt-stat-val" style="color:${retClr}">${d.total_return>=0?'+':''}${d.total_return}%</div>
+      <div class="bt-stat-key">Total Return</div>
+    </div>
+    <div class="bt-stat">
+      <div class="bt-stat-val" style="color:${avgClr}">${d.avg_return>=0?'+':''}${d.avg_return}%</div>
+      <div class="bt-stat-key">Avg Per Trade</div>
+    </div>`;
 
   document.getElementById('bt-chart-title').textContent=`${d.stock} — ${d.period.toUpperCase()} Price History`;
   const lc=d.total_return>=0?'#1a6b5e':'#9b2c3e';
   const fc=d.total_return>=0?'rgba(26,107,94,.06)':'rgba(155,44,62,.05)';
   btChart=new Chart(document.getElementById('btChart'),{
     type:'line',
-    data:{labels:d.chart_dates,datasets:[{data:d.chart_prices,borderColor:lc,backgroundColor:fc,borderWidth:2,fill:true,tension:.3,pointRadius:0}]},
+    data:{labels:d.chart_dates,datasets:[{
+      data:d.chart_prices,borderColor:lc,backgroundColor:fc,
+      borderWidth:2,fill:true,tension:.3,pointRadius:0
+    }]},
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{
         backgroundColor:'#fff',borderColor:'#d8d2c4',borderWidth:1,
         titleColor:'#7a7264',bodyColor:'#1a1714',
-        titleFont:{family:"'DM Mono',monospace",size:9},bodyFont:{family:"'DM Mono',monospace",size:11},
+        titleFont:{family:"'DM Mono',monospace",size:9},
+        bodyFont:{family:"'DM Mono',monospace",size:11},
         callbacks:{label:(ctx)=>' ₹'+fmt(ctx.raw)}
       }},
       scales:{
@@ -914,7 +893,10 @@ function renderBacktest(d){
   });
 
   const tl=document.getElementById('bt-trade-list');
-  if(!d.trades.length){tl.innerHTML=`<div class="empty-state" style="padding:30px;">No completed trades in this period.</div>`;return;}
+  if(!d.trades.length){
+    tl.innerHTML=`<div class="empty-state" style="padding:30px;">No completed trades found in this period. Try 1 Year or 2 Years.</div>`;
+    return;
+  }
   tl.innerHTML=d.trades.map(t=>{
     const pc=t.result==='WIN'?'c-green':'c-red';
     const pSign=t.pnl>=0?'+':'';
@@ -923,8 +905,9 @@ function renderBacktest(d){
       <span style="font-size:10px;">${t.sell_date}</span>
       <span>₹${fmt(t.buy_price)}</span>
       <span>₹${fmt(t.sell_price)}</span>
-      <span class="${pc}">${pSign}${t.pnl}%</span>
+      <span class="${pc}" style="font-weight:500;">${pSign}${t.pnl}%</span>
       <span><span class="badge ${t.result==='WIN'?'green':'red'}">${t.result}</span></span>
+      <span>${exitBadge(t.exit_reason)}</span>
     </div>`;
   }).join('');
   document.getElementById('bt-results').scrollIntoView({behavior:'smooth',block:'start'});

@@ -22,3 +22,6 @@ git status
 git add .......
 git commit -m "message here"
 git push origin main
+
+command to run the project
+C:\Users\anant\AppData\Local\Programs\Python\Python313\python.exe app.py                       

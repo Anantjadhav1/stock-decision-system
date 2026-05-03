@@ -63,7 +63,7 @@ class Engine:
             info = {'name': self.symbol}
         return prices, current, info
 
-    def fetch_extended(self, period="6mo"):
+    def fetch_extended(self, period="1y"):
         stock = yf.Ticker(self.symbol)
         hist  = stock.history(period=period)
         if hist.empty:
@@ -94,6 +94,51 @@ class Engine:
                 avg_gain = (avg_gain*(period-1) + max(d, 0))  / period
                 avg_loss = (avg_loss*(period-1) + max(-d, 0)) / period
         return rsi_values
+
+    def compute_macd(self, closes):
+        def ema(data, n):
+            k = 2 / (n + 1)
+            result = [float('nan')] * len(data)
+            start = n - 1
+            if start >= len(data):
+                return result
+            result[start] = sum(data[:n]) / n
+            for i in range(start + 1, len(data)):
+                result[i] = data[i] * k + result[i-1] * (1 - k)
+            return result
+
+        ema12 = ema(closes, 12)
+        ema26 = ema(closes, 26)
+        macd  = [
+            (ema12[i] - ema26[i]) if (ema12[i] == ema12[i] and ema26[i] == ema26[i]) else float('nan')
+            for i in range(len(closes))
+        ]
+        valid_macd = [(i, v) for i, v in enumerate(macd) if v == v]
+        signal_line = [float('nan')] * len(closes)
+        if len(valid_macd) >= 9:
+            idxs = [x[0] for x in valid_macd]
+            vals = [x[1] for x in valid_macd]
+            sig  = ema(vals, 9)
+            for j, idx in enumerate(idxs):
+                signal_line[idx] = sig[j] if j < len(sig) else float('nan')
+        return macd, signal_line
+
+    def compute_atr(self, closes, highs, lows, period=14):
+        if len(closes) < period + 1:
+            return [float('nan')] * len(closes)
+        trs = []
+        for i in range(1, len(closes)):
+            tr = max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i-1]),
+                abs(lows[i]  - closes[i-1])
+            )
+            trs.append(tr)
+        atr = [float('nan')] * len(closes)
+        atr[period] = sum(trs[:period]) / period
+        for i in range(period + 1, len(closes)):
+            atr[i] = (atr[i-1] * (period-1) + trs[i-1]) / period
+        return atr
 
     def build_features(self, hist):
         closes  = hist['Close'].tolist()
@@ -193,7 +238,6 @@ class Engine:
                 "long": long_v, "final": final, "reason": reason}
 
     def predict(self, prices):
-        """Legacy linear regression — used by /compare and /top."""
         x  = list(range(len(prices)))
         n  = len(x)
         mx = sum(x)/n;  my = sum(prices)/n
@@ -215,19 +259,15 @@ class Engine:
         return dip, abs(dip_pct)
 
     def compute_risk(self, closes):
-        """Volatility-based risk: std dev of daily returns."""
         if len(closes) < 2:
             return "MEDIUM"
         returns = [(closes[i]-closes[i-1])/closes[i-1] for i in range(1, len(closes))]
         mean_r  = sum(returns) / len(returns)
         variance = sum((r - mean_r)**2 for r in returns) / len(returns)
         vol = variance ** 0.5
-        if vol > 0.03:
-            return "HIGH"
-        elif vol > 0.015:
-            return "MEDIUM"
-        else:
-            return "LOW"
+        if vol > 0.03:   return "HIGH"
+        elif vol > 0.015: return "MEDIUM"
+        else:             return "LOW"
 
 
 @app.route('/')
@@ -255,14 +295,12 @@ def analyze():
         dec = eng.decision(ml_direction, latest_rsi,
                            latest_row['MA_short'], latest_row['MA_long'], user_type)
 
-        # ✅ FIXED: now using the same MA values as decision engine
         short_ma_display = round(latest_row['MA_short'], 2)
         long_ma_display  = round(latest_row['MA_long'], 2)
 
         dip, dip_pct     = eng.dip_label(prices, long_ma_display)
         change_pct = round((closes_all[-1]-closes_all[-2])/closes_all[-2]*100, 2) \
                      if len(closes_all) >= 2 else 0.0
-
         risk = eng.compute_risk(closes_all)
 
         entry = {
@@ -288,10 +326,8 @@ def analyze():
             "roe": info.get('roe'),
             "short_ma": short_ma_display, "long_ma": long_ma_display,
             "dip": dip, "dip_pct": dip_pct,
-            "trend":    dec['trend'],
-            "momentum": dec['momentum'],
-            "short":    dec['short'],
-            "long":     dec['long'],
+            "trend":    dec['trend'],  "momentum": dec['momentum'],
+            "short":    dec['short'],  "long":     dec['long'],
             "final":    dec['final'],
             "confidence": f"{confidence}%",
             "accuracy":   f"{accuracy}%",
@@ -307,53 +343,184 @@ def analyze():
 @app.route('/backtest', methods=['POST'])
 def backtest():
     symbol = request.json.get('stock', '').strip()
-    period = request.json.get('period', '6mo')
+    period = request.json.get('period', '1y')
     if not symbol:
         return jsonify({"error": "Stock symbol required"})
     try:
         eng = Engine(symbol)
-        closes, dates = eng.fetch_extended(period)
-        if len(closes) < 8:
-            return jsonify({"error": "Not enough historical data"})
-        trades = []; wins = losses = 0; total_return = 0.0
-        in_trade = False; buy_price = buy_date = 0
-        for i in range(6, len(closes)):
-            window   = closes[i-6:i]
-            short_ma = sum(window[-3:])/3
-            long_ma  = sum(window)/6
-            trend    = "BULLISH" if short_ma > long_ma else "BEARISH"
-            momentum = "UPWARD"  if window[-1] > window[-2] else "DOWNWARD"
-            long_v   = "BUY" if window[-1] > long_ma else "SELL"
-            if trend=="BULLISH" and momentum=="UPWARD" and long_v=="BUY":   signal="BUY"
-            elif trend=="BEARISH" and momentum=="DOWNWARD" and long_v=="SELL": signal="SELL"
-            else: signal="HOLD"
-            price, date = closes[i], dates[i]
-            if signal=="BUY" and not in_trade:
-                in_trade=True; buy_price=price; buy_date=date
-            elif signal=="SELL" and in_trade:
-                in_trade=False
-                pnl=round(((price-buy_price)/buy_price)*100,2); won=pnl>0
-                wins+=1 if won else 0; losses+=0 if won else 1; total_return+=pnl
-                trades.append({"buy_date":buy_date,"sell_date":date,
-                                "buy_price":round(buy_price,2),"sell_price":round(price,2),
-                                "pnl":pnl,"result":"WIN" if won else "LOSS"})
+        stock_obj = yf.Ticker(symbol.upper())
+        hist = stock_obj.history(period=period)
+
+        if hist.empty or len(hist) < 60:
+            return jsonify({"error": "Not enough data — try 1 Year or 2 Years."})
+
+        closes  = hist['Close'].dropna().tolist()
+        highs   = hist['High'].tolist()
+        lows    = hist['Low'].tolist()
+        dates   = [str(d.date()) for d in hist.index]
+
+        # ── Indicators ──
+        rsi_vals             = eng.compute_rsi(closes, period=14)
+        macd_line, sig_line  = eng.compute_macd(closes)
+        atr_vals             = eng.compute_atr(closes, highs, lows, period=14)
+
+        def ema_series(data, n):
+            k = 2 / (n + 1)
+            result = [float('nan')] * len(data)
+            start = n - 1
+            if start >= len(data): return result
+            result[start] = sum(data[:n]) / n
+            for i in range(start + 1, len(data)):
+                result[i] = data[i] * k + result[i-1] * (1 - k)
+            return result
+
+        ema20 = ema_series(closes, 20)
+        ema50 = ema_series(closes, 50)
+
+        # ── Multi-indicator confluence strategy ──
+        #
+        # ENTER (need 3 of 4 conditions + must be in uptrend):
+        #   1. EMA20 > EMA50           (uptrend confirmed)
+        #   2. RSI between 35–65       (not overbought/oversold extremes)
+        #   3. MACD above signal line  (bullish momentum)
+        #   4. Price above 20-day EMA  (near-term strength)
+        #
+        # EXIT (any one):
+        #   • ATR trailing stop (2× ATR below highest price reached)
+        #   • 6% take-profit
+        #   • RSI > 72 (overbought)
+        #   • MACD crosses below signal
+        #   • Price falls 2% below EMA20
+        #   • 30-day timeout
+
+        trades = []
+        wins = losses = 0
+        total_return = 0.0
+        in_trade  = False
+        buy_price = buy_date = None
+        trail_stop  = None
+        highest_price = None
+        hold_days   = 0
+        MAX_HOLD    = 30
+
+        WARMUP = 55
+
+        for i in range(WARMUP, len(closes)):
+            price = closes[i]
+            date  = dates[i]
+            rsi   = rsi_vals[i]
+            atr   = atr_vals[i]
+            ml    = macd_line[i]
+            sl    = sig_line[i]
+            e20   = ema20[i]
+            e50   = ema50[i]
+
+            if any(v != v for v in [rsi, atr, ml, sl, e20, e50]):
+                continue
+
+            ma20 = sum(closes[i-19:i+1]) / 20
+
+            # Score-based entry
+            cond1 = e20 > e50                     # uptrend
+            cond2 = 35 < rsi < 65                 # RSI in healthy zone
+            cond3 = ml > sl                       # MACD bullish
+            cond4 = price > e20                   # price above EMA20
+            score = sum([cond1, cond2, cond3, cond4])
+
+            # MACD crossover (extra weight)
+            prev_ml = macd_line[i-1] if i > 0 and macd_line[i-1] == macd_line[i-1] else ml
+            prev_sl = sig_line[i-1]  if i > 0 and sig_line[i-1]  == sig_line[i-1]  else sl
+            macd_cross_up   = ml > sl and prev_ml <= prev_sl
+            macd_cross_down = ml < sl and prev_ml >= prev_sl
+
+            if not in_trade:
+                if score >= 3 and cond1:
+                    in_trade      = True
+                    buy_price     = price
+                    buy_date      = date
+                    hold_days     = 0
+                    highest_price = price
+                    trail_stop    = price - (2.0 * atr)
+            else:
+                hold_days += 1
+                if price > highest_price:
+                    highest_price = price
+                # Ratchet trailing stop up
+                new_stop = highest_price - (2.0 * atr)
+                if new_stop > trail_stop:
+                    trail_stop = new_stop
+
+                pnl_pct = (price - buy_price) / buy_price
+
+                hit_trail   = price <= trail_stop
+                hit_profit  = pnl_pct >= 0.06
+                hit_ob_rsi  = rsi > 72
+                hit_macd_dn = macd_cross_down
+                hit_ema_dn  = price < e20 * 0.98
+                hit_timeout = hold_days >= MAX_HOLD
+
+                if any([hit_trail, hit_profit, hit_ob_rsi, hit_macd_dn, hit_ema_dn, hit_timeout]):
+                    in_trade = False
+                    pnl = round(pnl_pct * 100, 2)
+                    won = pnl > 0
+                    wins   += 1 if won else 0
+                    losses += 0 if won else 1
+                    total_return += pnl
+
+                    if hit_trail:   reason = "TRAIL-STOP"
+                    elif hit_profit: reason = "TAKE-PROFIT"
+                    elif hit_ob_rsi: reason = "RSI-EXIT"
+                    elif hit_macd_dn: reason = "MACD-EXIT"
+                    elif hit_ema_dn:  reason = "EMA-EXIT"
+                    else:             reason = "TIMEOUT"
+
+                    trades.append({
+                        "buy_date":    buy_date,
+                        "sell_date":   date,
+                        "buy_price":   round(buy_price, 2),
+                        "sell_price":  round(price, 2),
+                        "pnl":         pnl,
+                        "result":      "WIN" if won else "LOSS",
+                        "exit_reason": reason,
+                        "hold_days":   hold_days,
+                    })
+
+        # Close any open position at period end
         if in_trade:
-            price=closes[-1]; pnl=round(((price-buy_price)/buy_price)*100,2); won=pnl>0
-            wins+=1 if won else 0; losses+=0 if won else 1; total_return+=pnl
-            trades.append({"buy_date":buy_date,"sell_date":dates[-1]+" (open)",
-                           "buy_price":round(buy_price,2),"sell_price":round(price,2),
-                           "pnl":pnl,"result":"WIN" if won else "LOSS"})
-        total_trades=wins+losses
-        win_rate=round(wins/total_trades*100,1) if total_trades else 0
-        avg_return=round(total_return/total_trades,2) if total_trades else 0
-        step=max(1,len(closes)//60)
+            price = closes[-1]
+            pnl   = round(((price - buy_price) / buy_price) * 100, 2)
+            won   = pnl > 0
+            wins   += 1 if won else 0
+            losses += 0 if won else 1
+            total_return += pnl
+            trades.append({
+                "buy_date":    buy_date,
+                "sell_date":   dates[-1] + " (open)",
+                "buy_price":   round(buy_price, 2),
+                "sell_price":  round(price, 2),
+                "pnl":         pnl,
+                "result":      "WIN" if won else "LOSS",
+                "exit_reason": "OPEN",
+                "hold_days":   hold_days,
+            })
+
+        total_trades = wins + losses
+        win_rate     = round(wins / total_trades * 100, 1) if total_trades else 0
+        avg_return   = round(total_return / total_trades, 2) if total_trades else 0
+        step = max(1, len(closes) // 80)
+
         return jsonify({
-            "stock":symbol.upper(),"period":period,"total_trades":total_trades,
-            "wins":wins,"losses":losses,"win_rate":win_rate,
-            "total_return":round(total_return,2),"avg_return":avg_return,
-            "trades":trades[-20:],
-            "chart_prices":[round(closes[i],2) for i in range(0,len(closes),step)],
-            "chart_dates" :[dates[i]           for i in range(0,len(dates), step)],
+            "stock":        symbol.upper(),
+            "period":       period,
+            "total_trades": total_trades,
+            "wins":         wins,
+            "losses":       losses,
+            "win_rate":     win_rate,
+            "total_return": round(total_return, 2),
+            "avg_return":   avg_return,
+            "trades":       trades[-25:],
+            "chart_prices": [round(closes[i], 2) for i in range(0, len(closes), step)],
+            "chart_dates":  [dates[i]            for i in range(0, len(dates),  step)],
         })
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -386,10 +553,10 @@ def compare():
             elif short=="SELL" and long_v=="BUY":  final="HOLD"
             else:                                  final="HOLD"
             score = 0
-            if trend=="BULLISH":                       score+=2
-            if momentum=="UPWARD":                     score+=2
-            if direction=="UP":                        score+=1
-            if dip in ("STRONG DIP","MILD DIP"):       score+=2
+            if trend=="BULLISH":                 score+=2
+            if momentum=="UPWARD":               score+=2
+            if direction=="UP":                  score+=1
+            if dip in ("STRONG DIP","MILD DIP"): score+=2
             results.append({
                 "stock":sym,"name":info.get('name',sym),"price":current,
                 "prediction":prediction,"direction":direction,"change_pct":change_pct,
