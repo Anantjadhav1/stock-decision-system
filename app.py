@@ -255,13 +255,14 @@ def analyze():
         dec = eng.decision(ml_direction, latest_rsi,
                            latest_row['MA_short'], latest_row['MA_long'], user_type)
 
-        short_ma_display = round(sum(prices[-3:])/3, 2)
-        long_ma_display  = round(sum(prices)/len(prices), 2)
+        # ✅ FIXED: now using the same MA values as decision engine
+        short_ma_display = round(latest_row['MA_short'], 2)
+        long_ma_display  = round(latest_row['MA_long'], 2)
+
         dip, dip_pct     = eng.dip_label(prices, long_ma_display)
         change_pct = round((closes_all[-1]-closes_all[-2])/closes_all[-2]*100, 2) \
                      if len(closes_all) >= 2 else 0.0
 
-        # Risk indicator based on price volatility
         risk = eng.compute_risk(closes_all)
 
         entry = {
@@ -287,13 +288,11 @@ def analyze():
             "roe": info.get('roe'),
             "short_ma": short_ma_display, "long_ma": long_ma_display,
             "dip": dip, "dip_pct": dip_pct,
-            # All badge values from ONE source
             "trend":    dec['trend'],
             "momentum": dec['momentum'],
             "short":    dec['short'],
             "long":     dec['long'],
             "final":    dec['final'],
-            # ML extras
             "confidence": f"{confidence}%",
             "accuracy":   f"{accuracy}%",
             "risk":       risk,
