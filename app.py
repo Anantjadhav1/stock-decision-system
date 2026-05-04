@@ -7,6 +7,8 @@ import os
 import warnings
 import numpy as np
 from datetime import datetime
+import random
+import math
 
 warnings.filterwarnings('ignore')
 
@@ -56,7 +58,291 @@ class NumpyJSONProvider(DefaultJSONProvider):
 app = Flask(__name__, static_folder='static')
 app.json_provider_class = NumpyJSONProvider
 app.json = NumpyJSONProvider(app)
-# ─────────────────────────────────────────────────────────────────────────────
+
+RED   = True
+BLACK = False
+
+class RBNode:
+    def __init__(self, key, value):
+        self.key    = key          # composite_score (float)
+        self.value  = value        # stock entry dict
+        self.color  = RED
+        self.left   = None
+        self.right  = None
+        self.parent = None
+
+class RedBlackTree:
+    def __init__(self):
+        self.NIL  = RBNode(None, None)
+        self.NIL.color = BLACK
+        self.root = self.NIL
+        self._size = 0
+
+    def insert(self, key, value):
+        node = RBNode(key, value)
+        node.left  = self.NIL
+        node.right = self.NIL
+        self._bst_insert(node)
+        self._fix_insert(node)
+        self._size += 1
+
+    def _bst_insert(self, node):
+        parent = None
+        cur    = self.root
+        while cur != self.NIL:
+            parent = cur
+            if node.key < cur.key:
+                cur = cur.left
+            else:
+                cur = cur.right
+        node.parent = parent
+        if parent is None:
+            self.root = node
+        elif node.key < parent.key:
+            parent.left = node
+        else:
+            parent.right = node
+
+    def _fix_insert(self, z):
+        while z.parent and z.parent.color == RED:
+            if z.parent == z.parent.parent.left if z.parent.parent else False:
+                y = z.parent.parent.right
+                if y and y.color == RED:
+                    z.parent.color         = BLACK
+                    y.color                = BLACK
+                    z.parent.parent.color  = RED
+                    z = z.parent.parent
+                else:
+                    if z == z.parent.right:
+                        z = z.parent
+                        self._left_rotate(z)
+                    z.parent.color        = BLACK
+                    z.parent.parent.color = RED
+                    self._right_rotate(z.parent.parent)
+            else:
+                if z.parent.parent:
+                    y = z.parent.parent.left
+                    if y and y.color == RED:
+                        z.parent.color        = BLACK
+                        y.color               = BLACK
+                        z.parent.parent.color = RED
+                        z = z.parent.parent
+                    else:
+                        if z == z.parent.left:
+                            z = z.parent
+                            self._right_rotate(z)
+                        z.parent.color        = BLACK
+                        z.parent.parent.color = RED
+                        self._left_rotate(z.parent.parent)
+                else:
+                    break
+        self.root.color = BLACK
+
+    def _left_rotate(self, x):
+        y = x.right
+        x.right = y.left
+        if y.left != self.NIL:
+            y.left.parent = x
+        y.parent = x.parent
+        if x.parent is None:
+            self.root = y
+        elif x == x.parent.left:
+            x.parent.left = y
+        else:
+            x.parent.right = y
+        y.left   = x
+        x.parent = y
+
+    def _right_rotate(self, x):
+        y = x.left
+        x.left = y.right
+        if y.right != self.NIL:
+            y.right.parent = x
+        y.parent = x.parent
+        if x.parent is None:
+            self.root = y
+        elif x == x.parent.right:
+            x.parent.right = y
+        else:
+            x.parent.left = y
+        y.right  = x
+        x.parent = y
+
+    def inorder(self):
+        """Returns list of (key, value) sorted ascending by key."""
+        result = []
+        self._inorder(self.root, result)
+        return result
+
+    def _inorder(self, node, result):
+        if node == self.NIL or node is None:
+            return
+        self._inorder(node.left, result)
+        result.append((node.key, node.value))
+        self._inorder(node.right, result)
+
+    def top_n(self, n):
+        """Top n by score (descending)."""
+        return list(reversed(self.inorder()))[:n]
+
+    def bottom_n(self, n):
+        """Bottom n by score (ascending)."""
+        return self.inorder()[:n]
+
+    def size(self):
+        return self._size
+
+    def height(self):
+        return self._height(self.root)
+
+    def _height(self, node):
+        if node == self.NIL or node is None:
+            return 0
+        return 1 + max(self._height(node.left), self._height(node.right))
+
+    def to_serializable(self):
+        """Returns tree structure for frontend visualization."""
+        return self._serialize(self.root)
+
+    def _serialize(self, node):
+        if node == self.NIL or node is None:
+            return None
+        return {
+            'key':   round(node.key, 1) if node.key is not None else None,
+            'color': 'RED' if node.color == RED else 'BLACK',
+            'stock': node.value.get('stock', '') if node.value else '',
+            'left':  self._serialize(node.left),
+            'right': self._serialize(node.right),
+        }
+
+class DEPQ:
+    def __init__(self):
+        self._min_heap = []   # (score, uid, entry)
+        self._max_heap = []   # (-score, uid, entry)
+        self._removed  = set()
+        self._uid      = 0
+        self._entries  = {}   # uid → entry (for deduplication by symbol)
+        self._sym_uid  = {}   # symbol → uid
+
+    def push(self, score, entry):
+        symbol = entry.get('stock', '')
+        # If symbol already exists, invalidate old entry
+        if symbol in self._sym_uid:
+            old_uid = self._sym_uid[symbol]
+            self._removed.add(old_uid)
+        uid = self._uid
+        self._uid += 1
+        self._sym_uid[symbol] = uid
+        self._entries[uid]    = entry
+        heapq.heappush(self._min_heap, ( score, uid, entry))
+        heapq.heappush(self._max_heap, (-score, uid, entry))
+
+    def _clean_min(self):
+        while self._min_heap and self._min_heap[0][1] in self._removed:
+            heapq.heappop(self._min_heap)
+
+    def _clean_max(self):
+        while self._max_heap and self._max_heap[0][1] in self._removed:
+            heapq.heappop(self._max_heap)
+
+    def peek_top_k(self, k):
+        """Return top-k entries by score (best)."""
+        self._clean_max()
+        results = []
+        temp    = []
+        while self._max_heap and len(results) < k:
+            neg_score, uid, entry = heapq.heappop(self._max_heap)
+            if uid not in self._removed:
+                results.append((-neg_score, entry))
+            temp.append((neg_score, uid, entry))
+        for item in temp:
+            heapq.heappush(self._max_heap, item)
+        return results
+
+    def peek_bottom_k(self, k):
+        """Return bottom-k entries by score (worst)."""
+        self._clean_min()
+        results = []
+        temp    = []
+        while self._min_heap and len(results) < k:
+            score, uid, entry = heapq.heappop(self._min_heap)
+            if uid not in self._removed:
+                results.append((score, entry))
+            temp.append((score, uid, entry))
+        for item in temp:
+            heapq.heappush(self._min_heap, item)
+        return results
+
+    def size(self):
+        return len(self._sym_uid) - len(self._removed)
+
+MAX_LEVEL = 16
+P_FACTOR  = 0.5
+
+class SkipNode:
+    def __init__(self, price, date, stock, level):
+        self.price   = price
+        self.date    = date
+        self.stock   = stock
+        self.forward = [None] * (level + 1)
+
+class SkipList:
+    def __init__(self):
+        self.header    = SkipNode(-math.inf, None, None, MAX_LEVEL)
+        self.max_level = 0
+        self._size     = 0
+
+    def _random_level(self):
+        level = 0
+        while random.random() < P_FACTOR and level < MAX_LEVEL:
+            level += 1
+        return level
+
+    def insert(self, price, date, stock):
+        update = [None] * (MAX_LEVEL + 1)
+        cur    = self.header
+        for i in range(self.max_level, -1, -1):
+            while cur.forward[i] and cur.forward[i].price < price:
+                cur = cur.forward[i]
+            update[i] = cur
+        level = self._random_level()
+        if level > self.max_level:
+            for i in range(self.max_level + 1, level + 1):
+                update[i] = self.header
+            self.max_level = level
+        node = SkipNode(price, date, stock, level)
+        for i in range(level + 1):
+            node.forward[i]    = update[i].forward[i]
+            update[i].forward[i] = node
+        self._size += 1
+
+    def range_search(self, lo, hi):
+        """Return all nodes with lo <= price <= hi."""
+        results = []
+        cur     = self.header
+        for i in range(self.max_level, -1, -1):
+            while cur.forward[i] and cur.forward[i].price < lo:
+                cur = cur.forward[i]
+        cur = cur.forward[0]
+        while cur and cur.price <= hi:
+            results.append({'price': round(cur.price, 2), 'date': cur.date, 'stock': cur.stock})
+            cur = cur.forward[0]
+        return results
+
+    def size(self):
+        return self._size
+
+
+# ── GLOBAL INSTANCES ─────────────────────────────────────────────────────────
+rb_tree    = RedBlackTree()
+depq       = DEPQ()
+skip_lists = {}           # symbol → SkipList  (price history)
+leaderboard_entries = {}  # symbol → entry     (deduplication)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  (Rest of original code unchanged below)
+# ════════════════════════════════════════════════════════════════════════════
 
 portfolio    = []
 history_log  = []
@@ -74,9 +360,6 @@ def save_history():
         json.dump(history_log, f)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  INDICATOR LIBRARY
-# ════════════════════════════════════════════════════════════════════════════
 class Indicators:
 
     @staticmethod
@@ -220,7 +503,6 @@ class Indicators:
 
     @staticmethod
     def support_resistance(closes, n=20):
-        """Simple pivot-based S/R"""
         pivots_hi, pivots_lo = [], []
         for i in range(n, len(closes)-n):
             window = closes[i-n:i+n+1]
@@ -234,7 +516,6 @@ class Indicators:
 
     @staticmethod
     def adx(closes, highs, lows, period=14):
-        """Average Directional Index"""
         if len(closes) < period * 2:
             return [float('nan')] * len(closes)
         tr_list, dm_plus, dm_minus = [], [], []
@@ -276,9 +557,6 @@ class Indicators:
         return adx_r
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  FEATURE ENGINEERING
-# ════════════════════════════════════════════════════════════════════════════
 FEATURE_NAMES = [
     'returns_1d', 'returns_3d', 'returns_5d', 'returns_10d',
     'vol_3d', 'vol_5d', 'vol_10d',
@@ -306,7 +584,6 @@ def build_feature_matrix(hist):
     volumes = hist['Volume'].tolist()
     opens   = hist['Open'].tolist()
 
-    # Indicators
     rsi14   = Indicators.rsi(closes, 14)
     rsi7    = Indicators.rsi(closes, 7)
     macd_l, sig_l, hist_l = Indicators.macd(closes)
@@ -335,18 +612,15 @@ def build_feature_matrix(hist):
     WARMUP = 55
     for i in range(WARMUP, len(closes) - 1):
         c   = closes[i]
-        # Skip if any core indicator is NaN
         core = [rsi14[i], macd_l[i], sig_l[i], ema12[i], ema26[i], ema50[i], sma20[i], atr_v[i]]
         if any(v != v for v in core):
             continue
 
-        # Returns
         r1  = (closes[i] - closes[i-1]) / closes[i-1]
         r3  = (closes[i] - closes[i-3]) / closes[i-3] if i >= 3 else 0
         r5  = (closes[i] - closes[i-5]) / closes[i-5] if i >= 5 else 0
         r10 = (closes[i] - closes[i-10])/ closes[i-10] if i >= 10 else 0
 
-        # Volatility (rolling std of returns)
         def rolling_vol(n):
             if i < n: return 0
             rets = [(closes[j]-closes[j-1])/closes[j-1] for j in range(i-n+1, i+1)]
@@ -357,26 +631,22 @@ def build_feature_matrix(hist):
         vol5  = rolling_vol(5)
         vol10 = rolling_vol(10)
 
-        # Bollinger %B and width
         if bb_u[i] == bb_u[i] and bb_l[i] == bb_l[i] and (bb_u[i]-bb_l[i]) != 0:
             bb_pct   = (c - bb_l[i]) / (bb_u[i] - bb_l[i])
             bb_width = (bb_u[i] - bb_l[i]) / bb_m[i] if bb_m[i] else 0
         else:
             bb_pct = bb_width = 0
 
-        # MACD cross (1 if just crossed up, -1 down, else 0)
         prev_ml = macd_l[i-1] if i > 0 and macd_l[i-1]==macd_l[i-1] else macd_l[i]
         prev_sl = sig_l[i-1]  if i > 0 and sig_l[i-1]==sig_l[i-1]   else sig_l[i]
         if macd_l[i] > sig_l[i] and prev_ml <= prev_sl: macd_cross = 1
         elif macd_l[i] < sig_l[i] and prev_ml >= prev_sl: macd_cross = -1
         else: macd_cross = 0
 
-        # Stochastic
         sk = stoch_k[i] if stoch_k[i]==stoch_k[i] else 50
         sd = stoch_d[i] if stoch_d[i]==stoch_d[i] else 50
         wr = will_r[i]  if will_r[i]==will_r[i]   else -50
 
-        # MA ratios
         ma5r  = (c / sma5[i]  - 1) if sma5[i]==sma5[i]   and sma5[i]   else 0
         ma10r = (c / sma10[i] - 1) if sma10[i]==sma10[i]  and sma10[i]  else 0
         ma20r = (c / sma20[i] - 1) if sma20[i]==sma20[i]  and sma20[i]  else 0
@@ -384,28 +654,21 @@ def build_feature_matrix(hist):
         e12r  = (c / ema12[i] - 1) if ema12[i]==ema12[i]  and ema12[i]  else 0
         e26r  = (c / ema26[i] - 1) if ema26[i]==ema26[i]  and ema26[i]  else 0
 
-        # Volume ratios
         vs5  = (volumes[i] / vol_sma5[i]  - 1) if vol_sma5[i]==vol_sma5[i]   and vol_sma5[i]  else 0
         vs20 = (volumes[i] / vol_sma20[i] - 1) if vol_sma20[i]==vol_sma20[i]  and vol_sma20[i] else 0
 
-        # OBV slope (5-period)
         obv_slope = (obv_v[i] - obv_v[i-5]) / (abs(obv_v[i-5])+1) if i >= 5 else 0
 
-        # ATR %
         atr_pct = atr_v[i] / c if c else 0
 
-        # 52-week
         p52h = (c - hi52) / hi52 if hi52 else 0
         p52l = (c - lo52) / lo52 if lo52 else 0
 
-        # ADX
         adx_val = adx_v[i] if adx_v[i]==adx_v[i] else 20
 
-        # Momentum
         mom5  = (closes[i] - closes[i-5])  / closes[i-5]  if i >= 5  and closes[i-5]  else 0
         mom10 = (closes[i] - closes[i-10]) / closes[i-10] if i >= 10 and closes[i-10] else 0
 
-        # Candlestick body / shadows
         body  = (c - opens[i]) / opens[i] if opens[i] else 0
         upper = (highs[i] - max(c, opens[i])) / opens[i] if opens[i] else 0
         lower = (min(c, opens[i]) - lows[i]) / opens[i]  if opens[i] else 0
@@ -435,9 +698,6 @@ def build_feature_matrix(hist):
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.int32)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  LSTM SEQUENCE MODEL
-# ════════════════════════════════════════════════════════════════════════════
 def build_lstm_sequences(X, y, seq_len=10):
     Xs, ys = [], []
     for i in range(seq_len, len(X)):
@@ -463,15 +723,11 @@ def train_lstm(X_train_seq, y_train_seq, n_features):
     return model
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  ENSEMBLE ENGINE
-# ════════════════════════════════════════════════════════════════════════════
 class EnsembleEngine:
 
     def __init__(self, symbol):
         self.symbol = symbol.upper()
 
-    # ── Data fetch ──────────────────────────────────────────────────────────
     def fetch(self, period='5y'):
         stock = yf.Ticker(self.symbol)
         hist  = stock.history(period=period)
@@ -511,7 +767,6 @@ class EnsembleEngine:
             info = {'name': self.symbol}
         return prices6, current, info
 
-    # ── Train ensemble ───────────────────────────────────────────────────────
     def train_ensemble(self):
         hist = self._hist
         if len(hist) < 80:
@@ -531,21 +786,18 @@ class EnsembleEngine:
 
         models_info = {}
 
-        # ── Random Forest ──
         rf  = RandomForestClassifier(n_estimators=300, max_depth=8, min_samples_leaf=5,
                                      max_features='sqrt', random_state=42, n_jobs=-1)
         rf.fit(X_tr_s, y_tr)
         rf_acc = round(accuracy_score(y_te, rf.predict(X_te_s))*100, 1)
         models_info['rf'] = {'model': rf, 'acc': rf_acc, 'weight': 1.0}
 
-        # ── GradientBoosting ──
         gb  = GradientBoostingClassifier(n_estimators=200, learning_rate=0.05,
                                          max_depth=4, subsample=0.8, random_state=42)
         gb.fit(X_tr_s, y_tr)
         gb_acc = round(accuracy_score(y_te, gb.predict(X_te_s))*100, 1)
         models_info['gb'] = {'model': gb, 'acc': gb_acc, 'weight': 1.2}
 
-        # ── XGBoost (if available) ──
         if HAS_XGB:
             try:
                 xgb_m = xgb.XGBClassifier(n_estimators=300, learning_rate=0.05,
@@ -559,7 +811,6 @@ class EnsembleEngine:
             except Exception:
                 pass
 
-        # ── LightGBM (if available) ──
         if HAS_LGB:
             try:
                 lgb_m = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05,
@@ -575,7 +826,6 @@ class EnsembleEngine:
             except Exception:
                 pass
 
-        # ── LSTM (if available) ──
         lstm_model = None
         lstm_acc   = None
         if HAS_LSTM and len(X_tr_s) >= 50:
@@ -591,7 +841,6 @@ class EnsembleEngine:
             except Exception:
                 lstm_model = None
 
-        # ── Ensemble weighted probability ──
         latest_scaled = scaler.transform(X[-1:])
         total_weight  = 0.0
         prob_up_sum   = 0.0
@@ -607,7 +856,6 @@ class EnsembleEngine:
             total_weight += w
             model_details[name] = {'prob': round(prob*100, 1), 'acc': float(info['acc'])}
 
-        # LSTM contribution
         if lstm_model is not None and HAS_LSTM:
             SEQ = 10
             if len(X) >= SEQ:
@@ -620,7 +868,6 @@ class EnsembleEngine:
 
         ensemble_prob = float((prob_up_sum / total_weight) if total_weight else 0.5)
 
-        # ── Cross-val accuracy (RF as representative) ──
         cv_scores = cross_val_score(rf, X_tr_s, y_tr, cv=3, scoring='accuracy')
         cv_acc    = round(float(cv_scores.mean())*100, 1)
 
@@ -635,7 +882,6 @@ class EnsembleEngine:
             'models':        models_info,
         }
 
-    # ── Compute all indicators for display ──────────────────────────────────
     def compute_indicators(self):
         hist    = self._hist
         closes  = hist['Close'].tolist()
@@ -688,18 +934,15 @@ class EnsembleEngine:
             'resistance': resistance,
         }
 
-    # ── Multi-factor scoring (0-100) ─────────────────────────────────────────
     def multi_factor_score(self, ensemble_prob, indicators, info):
         score     = 0
         max_score = 0
         breakdown = {}
 
-        # 1. ML Ensemble (30 pts)
         ml_score = round(ensemble_prob * 30)
         score   += ml_score; max_score += 30
         breakdown['ML Ensemble'] = {'score': ml_score, 'max': 30}
 
-        # 2. Technical momentum (25 pts)
         tech = 0
         rsi  = indicators.get('rsi14', 50) or 50
         if 40 <= rsi <= 60:   tech += 5
@@ -721,7 +964,6 @@ class EnsembleEngine:
         score += tech; max_score += 25
         breakdown['Technical Indicators'] = {'score': tech, 'max': 25}
 
-        # 3. Trend alignment (20 pts)
         trend = 0
         ema20 = indicators.get('ema20') or 0
         ema50 = indicators.get('ema50') or 0
@@ -734,7 +976,6 @@ class EnsembleEngine:
         score += trend; max_score += 20
         breakdown['Trend Alignment'] = {'score': trend, 'max': 20}
 
-        # 4. Fundamentals (15 pts)
         fund = 0
         pe   = info.get('pe_ratio')
         pb   = info.get('pb_ratio')
@@ -751,7 +992,6 @@ class EnsembleEngine:
         score += fund; max_score += 15
         breakdown['Fundamentals'] = {'score': fund, 'max': 15}
 
-        # 5. Volume & volatility (10 pts)
         volvol = 0
         atr_p  = indicators.get('atr_pct', 2) or 2
         if atr_p < 1.5:    volvol += 5
@@ -766,7 +1006,6 @@ class EnsembleEngine:
         pct = round((score / max_score) * 100) if max_score else 50
         return pct, score, max_score, breakdown
 
-    # ── Decision with entry/target/stop ─────────────────────────────────────
     def generate_signal(self, ensemble_prob, indicators, composite_score, current_price, info):
         rsi   = indicators.get('rsi14', 50) or 50
         ema20 = indicators.get('ema20') or current_price
@@ -866,6 +1105,31 @@ def home():
     return send_from_directory('static', 'index.html')
 
 
+def _register_in_data_structures(symbol, entry, hist):
+    """
+    After every scan, register the stock in:
+      1. Red-Black Tree  → sorted by composite_score
+      2. DEPQ            → top/bottom extraction
+      3. Skip List       → price-range search on full history
+    """
+    score = entry.get('composite', 0)
+
+    # ── 1. RB Tree ──
+    leaderboard_entries[symbol] = entry
+    rb_tree.insert(score, entry)
+
+    # ── 2. DEPQ ──
+    depq.push(score, entry)
+
+    # ── 3. Skip List — load price history ──
+    if symbol not in skip_lists:
+        skip_lists[symbol] = SkipList()
+        closes = hist['Close'].dropna().tolist()
+        dates  = [str(d.date()) for d in hist.index]
+        for i, (price, date) in enumerate(zip(closes, dates)):
+            skip_lists[symbol].insert(float(price), date, symbol)
+
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data      = request.json or {}
@@ -903,10 +1167,17 @@ def analyze():
             'momentum':   'UPWARD'  if direction == 'UP' else 'DOWNWARD',
             'composite':  c_score,
             'timestamp':  datetime.now().strftime('%d %b %Y, %H:%M'),
+            'sector':     info.get('sector', 'N/A'),
+            'rsi14':      inds['rsi14'],
+            'adx':        inds['adx'],
+            'ensemble_prob': round(ensemble_prob*100, 1),
         }
         history_log.append(entry)
         if len(history_log) > 50: history_log.pop(0)
         save_history()
+
+        # ── Register in data structures ──
+        _register_in_data_structures(symbol.upper(), entry, eng._hist)
 
         chart_closes = [round(float(v), 2) for v in closes_all[-60:]]
         hist_dates   = [str(d.date()) for d in eng._hist.index[-60:]]
@@ -983,6 +1254,97 @@ def analyze():
         })
     except Exception as e:
         return jsonify({'error': str(e)})
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  LEADERBOARD ROUTE
+# ════════════════════════════════════════════════════════════════════════════
+
+@app.route('/leaderboard')
+def leaderboard():
+    """
+    Returns:
+      - rb_tree_sorted: full in-order list from Red-Black Tree
+      - depq_top3:      DEPQ best 3
+      - depq_bottom3:   DEPQ worst 3
+      - tree_viz:       serialized tree for D3 visualization
+      - tree_height:    RB Tree height
+      - tree_size:      number of unique nodes inserted
+      - depq_size:      number of live entries in DEPQ
+      - skip_symbols:   symbols with loaded Skip Lists + their sizes
+    """
+    all_sorted = rb_tree.inorder()   # [(score, entry), ...]
+    # Deduplicate by symbol (keep latest insertion = highest key occurrence)
+    seen   = {}
+    for score, entry in reversed(all_sorted):
+        sym = entry.get('stock','')
+        if sym not in seen:
+            seen[sym] = {'score': score, 'entry': entry}
+    deduped = sorted(seen.values(), key=lambda x: x['score'], reverse=True)
+
+    top3    = depq.peek_top_k(3)     # [(score, entry), ...]
+    bottom3 = depq.peek_bottom_k(3)
+
+    skip_info = {sym: sl.size() for sym, sl in skip_lists.items()}
+
+    return jsonify({
+        'rb_tree_sorted': [
+            {**v['entry'], 'score': v['score']}
+            for v in deduped
+        ],
+        'depq_top3':    [{'score': s, **e} for s, e in top3],
+        'depq_bottom3': [{'score': s, **e} for s, e in bottom3],
+        'tree_viz':     rb_tree.to_serializable(),
+        'tree_height':  rb_tree.height(),
+        'tree_size':    rb_tree.size(),
+        'depq_size':    depq.size(),
+        'skip_symbols': skip_info,
+    })
+
+
+@app.route('/price_range', methods=['POST'])
+def price_range():
+    """
+    Skip List range query: given a symbol, lo price, hi price →
+    return all historical days where price fell in [lo, hi].
+    """
+    data   = request.json or {}
+    symbol = data.get('stock', '').strip().upper()
+    lo     = float(data.get('lo', 0))
+    hi     = float(data.get('hi', 0))
+
+    if not symbol:
+        return jsonify({'error': 'Symbol required'})
+    if lo >= hi:
+        return jsonify({'error': 'lo must be less than hi'})
+
+    # If symbol not yet loaded, fetch and build skip list
+    if symbol not in skip_lists:
+        try:
+            stock_obj = yf.Ticker(symbol)
+            hist      = stock_obj.history(period='5y')
+            if hist.empty:
+                hist = stock_obj.history(period='1y')
+            if hist.empty:
+                return jsonify({'error': f'No data for {symbol}'})
+            skip_lists[symbol] = SkipList()
+            closes = hist['Close'].dropna().tolist()
+            dates  = [str(d.date()) for d in hist.index]
+            for price, date in zip(closes, dates):
+                skip_lists[symbol].insert(float(price), date, symbol)
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    sl      = skip_lists[symbol]
+    results = sl.range_search(lo, hi)
+    return jsonify({
+        'symbol':  symbol,
+        'lo':      lo,
+        'hi':      hi,
+        'count':   len(results),
+        'days':    results,
+        'sl_size': sl.size(),
+    })
 
 
 @app.route('/backtest', methods=['POST'])
