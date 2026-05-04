@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask.json.provider import DefaultJSONProvider
 import yfinance as yf
 import heapq
 import json
@@ -41,7 +42,21 @@ try:
 except ImportError:
     HAS_LSTM = False
 
+# ── Numpy JSON fix for Flask 3.x ─────────────────────────────────────────────
+class NumpyJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
 app = Flask(__name__, static_folder='static')
+app.json_provider_class = NumpyJSONProvider
+app.json = NumpyJSONProvider(app)
+# ─────────────────────────────────────────────────────────────────────────────
 
 portfolio    = []
 history_log  = []
@@ -536,7 +551,7 @@ class EnsembleEngine:
                 xgb_m = xgb.XGBClassifier(n_estimators=300, learning_rate=0.05,
                                            max_depth=5, subsample=0.8, colsample_bytree=0.8,
                                            reg_alpha=0.1, reg_lambda=1.0,
-                                           use_label_encoder=False, eval_metric='logloss',
+                                           eval_metric='logloss',
                                            random_state=42, n_jobs=-1)
                 xgb_m.fit(X_tr_s, y_tr, eval_set=[(X_te_s, y_te)], verbose=False)
                 xgb_acc = round(accuracy_score(y_te, xgb_m.predict(X_te_s))*100, 1)
@@ -587,10 +602,10 @@ class EnsembleEngine:
                 continue
             m   = info['model']
             w   = info['weight']
-            prob = m.predict_proba(latest_scaled)[0][1]
+            prob = float(m.predict_proba(latest_scaled)[0][1])
             prob_up_sum  += prob * w
             total_weight += w
-            model_details[name] = {'prob': round(prob*100, 1), 'acc': info['acc']}
+            model_details[name] = {'prob': round(prob*100, 1), 'acc': float(info['acc'])}
 
         # LSTM contribution
         if lstm_model is not None and HAS_LSTM:
@@ -601,18 +616,18 @@ class EnsembleEngine:
                 w = models_info['lstm']['weight']
                 prob_up_sum  += lstm_prob * w
                 total_weight += w
-                model_details['lstm'] = {'prob': round(lstm_prob*100, 1), 'acc': lstm_acc}
+                model_details['lstm'] = {'prob': round(lstm_prob*100, 1), 'acc': float(lstm_acc)}
 
-        ensemble_prob = (prob_up_sum / total_weight) if total_weight else 0.5
+        ensemble_prob = float((prob_up_sum / total_weight) if total_weight else 0.5)
 
         # ── Cross-val accuracy (RF as representative) ──
         cv_scores = cross_val_score(rf, X_tr_s, y_tr, cv=3, scoring='accuracy')
-        cv_acc    = round(cv_scores.mean()*100, 1)
+        cv_acc    = round(float(cv_scores.mean())*100, 1)
 
         return {
             'ensemble_prob': round(ensemble_prob, 4),
             'direction':     'UP' if ensemble_prob >= 0.50 else 'DOWN',
-            'confidence':    round(abs(ensemble_prob - 0.5) * 200, 1),  # 0–100
+            'confidence':    round(abs(ensemble_prob - 0.5) * 200, 1),
             'model_details': model_details,
             'cv_accuracy':   cv_acc,
             'scaler':        scaler,
@@ -687,21 +702,21 @@ class EnsembleEngine:
         # 2. Technical momentum (25 pts)
         tech = 0
         rsi  = indicators.get('rsi14', 50) or 50
-        if 40 <= rsi <= 60:   tech += 5  # healthy zone
-        elif rsi < 35:        tech += 4  # oversold (opportunity)
-        elif rsi > 70:        tech -= 2  # overbought
+        if 40 <= rsi <= 60:   tech += 5
+        elif rsi < 35:        tech += 4
+        elif rsi > 70:        tech -= 2
         macd_h = indicators.get('macd_hist', 0) or 0
         if macd_h > 0:        tech += 5
         stk = indicators.get('stoch_k', 50) or 50
         if stk < 30:          tech += 4
         elif stk > 80:        tech -= 2
         bb_p = indicators.get('bb_pct', 0.5) or 0.5
-        if bb_p < 0.25:       tech += 4  # near lower band
+        if bb_p < 0.25:       tech += 4
         elif bb_p > 0.85:     tech -= 2
         adx_v2 = indicators.get('adx', 20) or 20
-        if adx_v2 > 25:       tech += 4  # strong trend
+        if adx_v2 > 25:       tech += 4
         wr = indicators.get('williams_r', -50) or -50
-        if wr < -80:          tech += 3  # oversold
+        if wr < -80:          tech += 3
         tech = max(0, min(tech, 25))
         score += tech; max_score += 25
         breakdown['Technical Indicators'] = {'score': tech, 'max': 25}
@@ -739,9 +754,9 @@ class EnsembleEngine:
         # 5. Volume & volatility (10 pts)
         volvol = 0
         atr_p  = indicators.get('atr_pct', 2) or 2
-        if atr_p < 1.5:    volvol += 5  # low volatility
+        if atr_p < 1.5:    volvol += 5
         elif atr_p < 3:    volvol += 3
-        elif atr_p > 5:    volvol += 0  # high vol = risky
+        elif atr_p > 5:    volvol += 0
         beta   = info.get('beta')
         if beta and 0.5 < beta < 1.5: volvol += 5
         volvol = min(volvol, 10)
@@ -760,7 +775,6 @@ class EnsembleEngine:
         macd_h = indicators.get('macd_hist', 0) or 0
         adx_v  = indicators.get('adx', 20) or 20
 
-        # Determine final verdict based on composite score
         if composite_score >= 75:
             final = 'STRONG BUY'
         elif composite_score >= 60:
@@ -772,28 +786,24 @@ class EnsembleEngine:
         else:
             final = 'HOLD'
 
-        # Entry, target, stop-loss
         entry  = current_price
         sl_atr = round(current_price - 2.0 * atr, 2)
-        sl_pct = round(current_price * 0.94, 2)     # 6% hard stop
+        sl_pct = round(current_price * 0.94, 2)
         stop   = max(sl_atr, sl_pct)
 
-        r2r    = 2.0  # risk-to-reward
+        r2r    = 2.0
         risk   = current_price - stop
         target_1 = round(current_price + risk * r2r,       2)
         target_2 = round(current_price + risk * r2r * 1.5, 2)
 
-        # Risk-reward ratio
-        rr_ratio = round(risk_reward := (target_1 - entry) / (entry - stop), 2) \
+        rr_ratio = round((target_1 - entry) / (entry - stop), 2) \
                    if (entry - stop) > 0 else 0
 
-        # Risk classification
         atr_pct = indicators.get('atr_pct', 2) or 2
         if atr_pct > 4 or rsi > 75:   risk_level = 'HIGH'
         elif atr_pct > 2 or rsi > 65: risk_level = 'MEDIUM'
         else:                          risk_level = 'LOW'
 
-        # Reason string
         trend_str = 'bullish (EMA20>EMA50)' if ema20 > ema50 else 'bearish (EMA20<EMA50)'
         rsi_str   = f'RSI {rsi:.1f} — {"oversold" if rsi<35 else "overbought" if rsi>70 else "neutral"}'
         macd_str  = 'MACD bullish' if macd_h > 0 else 'MACD bearish'
@@ -813,7 +823,6 @@ class EnsembleEngine:
             'reason':    reason,
         }
 
-    # ── Volatility / risk ────────────────────────────────────────────────────
     @staticmethod
     def compute_risk(closes):
         if len(closes) < 2: return 'MEDIUM'
@@ -825,7 +834,6 @@ class EnsembleEngine:
         elif vol > 0.015: return 'MEDIUM'
         else:             return 'LOW'
 
-    # ── Dip label ────────────────────────────────────────────────────────────
     @staticmethod
     def dip_label(prices, long_ma):
         below   = sum(1 for p in prices[-3:] if p < long_ma)
@@ -836,7 +844,6 @@ class EnsembleEngine:
         else:                             dip = 'NEAR FAIR VALUE'
         return dip, abs(dip_pct)
 
-    # ── Linear regression prediction ─────────────────────────────────────────
     @staticmethod
     def lr_predict(prices):
         x  = list(range(len(prices)))
@@ -870,31 +877,23 @@ def analyze():
         eng = EnsembleEngine(symbol)
         prices6, current, info = eng.fetch()
 
-        # Ensemble training
-        result   = eng.train_ensemble()
+        result        = eng.train_ensemble()
         ensemble_prob = result['ensemble_prob']
         direction     = result['direction']
         confidence    = result['confidence']
         model_details = result['model_details']
         cv_acc        = result['cv_accuracy']
 
-        # Indicators
         inds = eng.compute_indicators()
-
-        # Composite score
         c_score, raw_s, raw_max, breakdown = eng.multi_factor_score(ensemble_prob, inds, info)
+        sig  = eng.generate_signal(ensemble_prob, inds, c_score, current, info)
 
-        # Signal
-        sig = eng.generate_signal(ensemble_prob, inds, c_score, current, info)
-
-        # Change
         closes_all = eng._hist['Close'].dropna().tolist()
         change_pct = round((closes_all[-1]-closes_all[-2])/closes_all[-2]*100, 2) \
                      if len(closes_all) >= 2 else 0.0
 
         dip, dip_pct = EnsembleEngine.dip_label(prices6, inds['sma20'] or prices6[-1])
 
-        # History entry
         entry = {
             'id': len(history_log)+1, 'stock': symbol.upper(),
             'name': info.get('name', symbol), 'price': current,
@@ -909,8 +908,7 @@ def analyze():
         if len(history_log) > 50: history_log.pop(0)
         save_history()
 
-        # Chart data (recent 60 days)
-        chart_closes = [round(v, 2) for v in closes_all[-60:]]
+        chart_closes = [round(float(v), 2) for v in closes_all[-60:]]
         hist_dates   = [str(d.date()) for d in eng._hist.index[-60:]]
 
         return jsonify({
@@ -929,7 +927,6 @@ def analyze():
             'model_details': model_details,
             'composite_score': c_score,
             'score_breakdown': breakdown,
-            # Indicators
             'rsi14':      inds['rsi14'],
             'rsi7':       inds['rsi7'],
             'macd':       inds['macd'],
@@ -951,7 +948,6 @@ def analyze():
             'adx':        inds['adx'],
             'support':    inds['support'],
             'resistance': inds['resistance'],
-            # Signal
             'final':      sig['final'],
             'entry':      sig['entry'],
             'target_1':   sig['target_1'],
@@ -960,7 +956,6 @@ def analyze():
             'rr_ratio':   sig['rr_ratio'],
             'risk':       sig['risk'],
             'reason':     sig['reason'],
-            # Fundamentals
             'sector':         info.get('sector', 'N/A'),
             'industry':       info.get('industry', 'N/A'),
             '52w_high':       info.get('52w_high'),
@@ -1089,9 +1084,9 @@ def backtest():
                     wins   += 1 if won else 0
                     losses += 0 if won else 1
                     total_return += pnl
-                    if hit_trail:    reason = 'TRAIL-STOP'
-                    elif hit_profit: reason = 'TAKE-PROFIT'
-                    elif hit_ob_rsi: reason = 'RSI-EXIT'
+                    if hit_trail:     reason = 'TRAIL-STOP'
+                    elif hit_profit:  reason = 'TAKE-PROFIT'
+                    elif hit_ob_rsi:  reason = 'RSI-EXIT'
                     elif hit_macd_dn: reason = 'MACD-EXIT'
                     elif hit_ema_dn:  reason = 'EMA-EXIT'
                     else:             reason = 'TIMEOUT'
@@ -1125,7 +1120,6 @@ def backtest():
             dd = (peak - c) / peak * 100
             if dd > max_dd: max_dd = dd
 
-        # Sharpe (annualised, simplified)
         if len(closes) >= 2:
             rets     = [(closes[i]-closes[i-1])/closes[i-1] for i in range(1, len(closes))]
             mean_r   = sum(rets)/len(rets)
@@ -1189,7 +1183,7 @@ def compare():
                 'market_cap': info.get('market_cap'), 'roe': info.get('roe'),
                 'sector': info.get('sector', 'N/A'),
                 '52w_high': info.get('52w_high'), '52w_low': info.get('52w_low'),
-                'prices': [round(p,2) for p in closes_all[-30:]],
+                'prices': [round(float(p),2) for p in closes_all[-30:]],
                 'score': c_score, 'error': None,
             })
         except Exception as e:
