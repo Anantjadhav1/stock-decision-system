@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>STOCKOS — Ensemble Intelligence Terminal</title>
+<title>StockSense — ML Stock Prediction Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -92,7 +92,7 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 .badge.grey{color:var(--ink3);border-color:var(--border);background:var(--paper);}
 
 /* ── ANALYZE TOP ── */
-.analyze-top{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px;}
+.analyze-top{display:block;margin-bottom:16px;}
 .search-panel{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:32px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
 .search-panel::after{content:'';position:absolute;top:-80px;right:-80px;width:280px;height:280px;background:radial-gradient(circle,rgba(26,107,94,.07) 0%,transparent 70%);pointer-events:none;}
 .search-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
@@ -100,18 +100,11 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 .search-title em{color:var(--teal);}
 .search-sub{font-family:var(--mono);font-size:10px;color:var(--ink4);margin-bottom:20px;}
 .user-type-row{display:flex;gap:8px;margin-bottom:16px;}
-.utype-btn{flex:1;padding:8px;background:var(--paper);border:1.5px solid var(--border);color:var(--ink3);font-family:var(--mono);font-size:9px;letter-spacing:.1em;border-radius:7px;cursor:pointer;transition:all .15s;text-align:center;text-transform:uppercase;}
-.utype-btn.active{background:var(--teal-lt);border-color:var(--teal);color:var(--teal);}
 .input-row{display:flex;gap:8px;}
 .quick-picks{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 .qlabel{font-family:var(--mono);font-size:9px;color:var(--ink4);}
 .qpick{background:var(--paper);border:1px solid var(--border);color:var(--ink3);font-family:var(--mono);font-size:9px;padding:5px 11px;border-radius:5px;cursor:pointer;transition:all .12s;}
 .qpick:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-lt);}
-.status-panel{background:var(--ivory);border:1px solid var(--border);border-radius:var(--r);padding:24px;}
-.status-head{font-family:var(--serif);font-size:16px;color:var(--ink);padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px;}
-.stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.stat-key{font-family:var(--mono);font-size:9px;color:var(--ink4);letter-spacing:.08em;text-transform:uppercase;}
-.stat-val{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink);}
 
 /* ── VERDICT ── */
 .verdict-wrap{margin-bottom:14px;}
@@ -260,32 +253,6 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 .hist-row:hover{background:var(--cream);}
 .h-sym{font-weight:500;color:var(--ink);}.h-time{color:var(--ink4);font-size:9px;}
 
-/* ── BACKTEST ── */
-.bt-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin-bottom:22px;}
-.bt-label{font-family:var(--mono);font-size:9px;color:var(--ink4);letter-spacing:.12em;margin-bottom:8px;text-transform:uppercase;}
-.bt-select{background:#fff;border:1.5px solid var(--border);color:var(--ink);font-family:var(--mono);font-size:13px;padding:12px 16px;border-radius:8px;outline:none;cursor:pointer;width:100%;box-shadow:var(--shadow-sm);}
-.bt-select:focus{border-color:var(--teal);}
-.bt-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
-.bt-stat{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--shadow-sm);}
-.bt-stat-val{font-family:var(--mono);font-size:22px;font-weight:300;line-height:1;margin-bottom:6px;color:var(--ink);}
-.bt-stat-key{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--ink4);text-transform:uppercase;}
-.bt-strategy-box{background:var(--teal-lt);border:1px solid var(--teal-md);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;gap:14px;align-items:flex-start;}
-.bt-strategy-icon{font-size:16px;flex-shrink:0;}
-.bt-strategy-text{font-family:var(--mono);font-size:10px;color:var(--teal);line-height:1.8;letter-spacing:.04em;}
-.bt-strategy-text strong{font-size:11px;display:block;margin-bottom:4px;color:var(--teal);letter-spacing:.1em;}
-.bt-chart-wrap{position:relative;height:220px;}
-.bt-trades{margin-top:16px;}
-.bt-trade-head{display:grid;grid-template-columns:1.4fr 1.4fr .9fr .9fr .8fr .8fr .9fr;padding:10px 18px;background:var(--ivory);border-radius:8px 8px 0 0;border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--ink4);text-transform:uppercase;}
-.bt-trade-row{display:grid;grid-template-columns:1.4fr 1.4fr .9fr .9fr .8fr .8fr .9fr;padding:11px 18px;border:1px solid var(--paper);border-top:none;font-family:var(--mono);font-size:11px;color:var(--ink2);transition:background .12s;background:#fff;}
-.bt-trade-row:last-child{border-radius:0 0 8px 8px;}
-.bt-trade-row:hover{background:var(--cream);}
-.exit-tp{color:var(--teal);background:var(--teal-lt);border-color:var(--teal-md);}
-.exit-sl{color:var(--rose);background:var(--rose-lt);border-color:var(--rose-md);}
-.exit-rsi{color:var(--amber);background:var(--amber-lt);border-color:var(--amber-md);}
-.exit-macd{color:var(--blue);background:var(--blue-lt);border-color:var(--blue-md);}
-.exit-ema{color:var(--ink3);background:var(--paper);border-color:var(--border);}
-.exit-open{color:var(--teal);background:var(--teal-lt);border-color:var(--teal-md);}
-.exit-other{color:var(--ink4);background:var(--paper);border-color:var(--border);}
 
 /* ── COMPARE ── */
 .cmp-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:22px;}
@@ -337,11 +304,10 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 <body>
 
 <nav>
-  <div class="nav-logo">Stock<em>OS</em><sup>v4 · ENSEMBLE</sup></div>
+  <div class="nav-logo">Stock<em>Sense</em><sup>ML · PREDICT</sup></div>
   <div class="nav-links">
     <button class="nav-btn active" onclick="showPage('analyze',this)">Analyze</button>
     <button class="nav-btn" onclick="showPage('compare',this)">Compare</button>
-    <button class="nav-btn" onclick="showPage('backtest',this)">Backtest</button>
     <button class="nav-btn" onclick="showPage('portfolio',this)">Portfolio</button>
     <button class="nav-btn" onclick="showPage('top',this)">Top Stocks</button>
     <button class="nav-btn" onclick="showPage('history',this)">History</button>
@@ -356,14 +322,8 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 <div class="page active" id="page-analyze">
   <div class="analyze-top">
     <div class="search-panel">
-      <div class="search-eyebrow">Ensemble Intelligence Terminal v4</div>
-      <div class="search-title">XGBoost · LightGBM · <em>LSTM</em></div>
-      <div class="search-sub">// 35-feature model · multi-factor scoring · entry/target/SL</div>
-      <div class="user-type-row">
-        <button class="utype-btn active" id="utype-trader" onclick="setUserType('trader')">📈 TRADER</button>
-        <button class="utype-btn" id="utype-investor" onclick="setUserType('investor')">🏦 INVESTOR</button>
-        <button class="utype-btn" id="utype-swing" onclick="setUserType('swing')">🔄 SWING</button>
-      </div>
+      <div class="search-eyebrow">STOCK PREDICTION PLATFORM · NSE / BSE</div>
+<div class="search-title">Predict<em> Smarter</em></div>
       <div class="input-row">
         <input class="input-field" id="stock-input" placeholder="Enter symbol e.g. RELIANCE.NS" onkeydown="if(event.key==='Enter')runAnalyze()" style="flex:1"/>
         <button class="btn btn-primary" id="analyze-btn" onclick="runAnalyze()">SCAN</button>
@@ -379,17 +339,6 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
         <span class="qpick" onclick="quickPick('WIPRO.NS')">WIPRO</span>
         <span class="qpick" onclick="quickPick('BAJFINANCE.NS')">BAJFIN</span>
       </div>
-    </div>
-    <div class="status-panel">
-      <div class="status-head">System Status</div>
-      <div class="stat-row"><span class="stat-key">Engine</span><span class="stat-val c-green">ONLINE</span></div>
-      <div class="stat-row"><span class="stat-key">Models</span><span class="stat-val">RF · GB · XGB · LGB · LSTM</span></div>
-      <div class="stat-row"><span class="stat-key">Features</span><span class="stat-val">35 ENGINEERED</span></div>
-      <div class="stat-row"><span class="stat-key">Data</span><span class="stat-val">5-YEAR HISTORY</span></div>
-      <div class="stat-row"><span class="stat-key">Indicators</span><span class="stat-val">RSI·MACD·BB·ATR·ADX+</span></div>
-      <div class="stat-row"><span class="stat-key">Scoring</span><span class="stat-val">MULTI-FACTOR 0–100</span></div>
-      <div class="stat-row"><span class="stat-key">Last Scan</span><span class="stat-val" id="last-scan">—</span></div>
-      <div class="stat-row"><span class="stat-key">Total Scans</span><span class="stat-val" id="scan-count">0</span></div>
     </div>
   </div>
 
@@ -536,56 +485,6 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
   <div id="cmp-results"></div>
 </div>
 
-<!-- ════════════════════ BACKTEST ════════════════════ -->
-<div class="page" id="page-backtest">
-  <div class="section-label">Strategy Backtesting</div>
-  <div class="bt-controls">
-    <div>
-      <div class="bt-label">Stock Symbol</div>
-      <input class="input-field" id="bt-stock" placeholder="e.g. RELIANCE.NS" onkeydown="if(event.key==='Enter')runBacktest()"/>
-    </div>
-    <div>
-      <div class="bt-label">Time Period</div>
-      <select class="bt-select" id="bt-period">
-        <option value="6mo">6 Months</option>
-        <option value="1y" selected>1 Year</option>
-        <option value="2y">2 Years</option>
-        <option value="5y">5 Years</option>
-      </select>
-    </div>
-    <button class="btn btn-primary" id="bt-btn" onclick="runBacktest()">RUN BACKTEST</button>
-  </div>
-  <div class="bt-strategy-box">
-    <div class="bt-strategy-icon">🧠</div>
-    <div class="bt-strategy-text">
-      <strong>ENHANCED MULTI-INDICATOR CONFLUENCE STRATEGY</strong>
-      BUY when 4 of 6 conditions align: EMA20 > EMA50 · RSI 35–65 · MACD above signal · Price above EMA20 · Stochastic &lt; 70 · Price above Bollinger lower<br>
-      EXIT via: 8% take-profit · 2×ATR trailing stop · RSI &gt;75 · MACD bearish cross · 3% EMA breakdown · 30-day timeout · Reports: Sharpe + Max Drawdown
-    </div>
-  </div>
-  <div class="loading-bar" id="bt-lbar"><div class="loading-fill"></div></div>
-  <div class="loading-text" id="bt-ltxt" style="margin-bottom:10px;">RUNNING STRATEGY SIMULATION...</div>
-  <div class="warn-box" id="bt-warn"></div>
-  <div class="error-box" id="bt-err" style="margin-bottom:14px;"></div>
-  <div id="bt-results" style="display:none;">
-    <div class="bt-stats" id="bt-stats"></div>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="chart-head">
-        <div class="chart-title" id="bt-chart-title">// HISTORICAL PRICE — STRATEGY PERIOD</div>
-      </div>
-      <div class="bt-chart-wrap"><canvas id="btChart"></canvas></div>
-    </div>
-    <div class="bt-trades">
-      <div class="bt-trade-head">
-        <span>BUY DATE</span><span>SELL DATE</span>
-        <span>BUY ₹</span><span>SELL ₹</span>
-        <span>P&amp;L %</span><span>RESULT</span><span>EXIT</span>
-      </div>
-      <div id="bt-trade-list"></div>
-    </div>
-  </div>
-</div>
-
 <!-- ════════════════════ PORTFOLIO ════════════════════ -->
 <div class="page" id="page-portfolio">
   <div class="section-label">Portfolio Watchlist</div>
@@ -622,7 +521,7 @@ nav{position:fixed;top:0;left:0;right:0;height:60px;z-index:200;background:rgba(
 </div>
 
 <script>
-let mainChart=null, btChart=null, cmpCharts=[];
+let mainChart=null, cmpCharts=[];
 let scanCount=0, userType='trader';
 let lastData=null; // store for chart switching
 
@@ -639,11 +538,6 @@ function showPage(name,btn){
   if(name==='top')       loadTop();
 }
 
-function setUserType(t){
-  userType=t;
-  document.querySelectorAll('.utype-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('utype-'+t).classList.add('active');
-}
 
 function fmt(n,dec=2){if(n==null||isNaN(n))return'N/A';return parseFloat(n).toLocaleString('en-IN',{maximumFractionDigits:dec});}
 function pct(n){if(n==null||isNaN(n))return'N/A';return (n>=0?'+':'')+n.toFixed(2)+'%';}
@@ -684,8 +578,6 @@ async function runAnalyze(){
     lastData=d;
     renderAnalyze(d);
     scanCount++;
-    document.getElementById('scan-count').textContent=scanCount;
-    document.getElementById('last-scan').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false});
   }catch(e){setError('a-err',e.message||'Backend not responding. Make sure Flask is running.');}
   finally{btn.disabled=false;setLoading('a',false);}
 }
@@ -825,7 +717,7 @@ function renderAnalyze(d){
   const pm=d.profit_margin!=null?(d.profit_margin*100).toFixed(1)+'%':'N/A';
   const funds=[
     ['P/E RATIO',fmt(d.pe_ratio,1)],['P/B RATIO',fmt(d.pb_ratio,2)],['MARKET CAP',mc],
-    ['ROE',roe],['DEBT/EQUITY',fmt(d.debt_to_equity,2)],['EPS',d.eps?'₹'+fmt(d.eps,2):'N/A'],
+    ['ROE',roe],['DEBT/EQUITY', d.debt_to_equity!=null ? fmt(d.debt_to_equity,2)+'%' : 'N/A'],['EPS',d.eps?'₹'+fmt(d.eps,2):'N/A'],
     ['DIV YIELD',dy],['REV GROWTH',rg],['PROFIT MARGIN',pm],
     ['CURRENT RATIO',fmt(d.current_ratio,2)],['BETA',fmt(d.beta,2)],
     ['ANALYST TARGET',d.analyst_target?'₹'+fmt(d.analyst_target):'N/A'],
@@ -986,69 +878,6 @@ function renderCompare(results){
       document.getElementById('cmp-fill-'+idx).style.width=r.composite_score+'%';
     });
   },100);
-}
-
-/* ─── BACKTEST ─── */
-async function runBacktest(){
-  const sym=document.getElementById('bt-stock').value.trim();
-  if(!sym){setError('bt-err','Enter a stock symbol');return;}
-  const period=document.getElementById('bt-period').value;
-  const btn=document.getElementById('bt-btn');
-  btn.disabled=true;setLoading('bt',true);clearError('bt-err');
-  const wb=document.getElementById('bt-warn');wb.classList.remove('show');
-  document.getElementById('bt-results').style.display='none';
-  if(btChart){btChart.destroy();btChart=null;}
-  try{
-    const d=await post('/backtest',{stock:sym,period});
-    if(d.error){setError('bt-err',d.error);return;}
-    renderBacktest(d);
-  }catch(e){setError('bt-err',e.message||'Backend not responding.');}
-  finally{btn.disabled=false;setLoading('bt',false);}
-}
-
-function exitBadge(r){
-  const map={'TAKE-PROFIT':['TP','exit-tp'],'TRAIL-STOP':['SL','exit-sl'],'RSI-EXIT':['RSI','exit-rsi'],
-    'MACD-EXIT':['MACD','exit-macd'],'EMA-EXIT':['EMA','exit-ema'],'OPEN':['OPEN','exit-open'],'TIMEOUT':['TMO','exit-other']};
-  const[label,cls]=map[r]||[r,'exit-other'];
-  return`<span class="badge ${cls}" style="font-size:8px;padding:2px 7px;">${label}</span>`;
-}
-
-function renderBacktest(d){
-  document.getElementById('bt-results').style.display='block';
-  const wb=document.getElementById('bt-warn');
-  if(d.total_trades<5){wb.textContent=`⚠ Only ${d.total_trades} trade(s) found. Try a longer period.`;wb.classList.add('show');}
-  const wrClr=d.win_rate>=60?'var(--teal)':d.win_rate>=40?'var(--amber)':'var(--rose)';
-  const retClr=d.total_return>=0?'var(--teal)':'var(--rose)';
-  const avgClr=d.avg_return>=0?'var(--teal)':'var(--rose)';
-  const shrClr=d.sharpe_ratio>=1?'var(--teal)':d.sharpe_ratio>=0?'var(--amber)':'var(--rose)';
-  document.getElementById('bt-stats').innerHTML=`
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${wrClr}">${d.win_rate}%</div><div class="bt-stat-key">Win Rate</div></div>
-    <div class="bt-stat"><div class="bt-stat-val">${d.total_trades}</div><div class="bt-stat-key">Total Trades</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${retClr}">${d.total_return>=0?'+':''}${d.total_return}%</div><div class="bt-stat-key">Total Return</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${avgClr}">${d.avg_return>=0?'+':''}${d.avg_return}%</div><div class="bt-stat-key">Avg Per Trade</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:var(--rose)">-${d.max_drawdown}%</div><div class="bt-stat-key">Max Drawdown</div></div>
-    <div class="bt-stat"><div class="bt-stat-val" style="color:${shrClr}">${d.sharpe_ratio}</div><div class="bt-stat-key">Sharpe Ratio</div></div>`;
-  document.getElementById('bt-chart-title').textContent=`${d.stock} — ${d.period.toUpperCase()} Price History`;
-  const lc=d.total_return>=0?'#1a6b5e':'#9b2c3e';
-  const fc=d.total_return>=0?'rgba(26,107,94,.06)':'rgba(155,44,62,.05)';
-  btChart=new Chart(document.getElementById('btChart'),{type:'line',data:{labels:d.chart_dates,datasets:[{
-    data:d.chart_prices,borderColor:lc,backgroundColor:fc,borderWidth:2,fill:true,tension:.3,pointRadius:0
-  }]},options:chartOpts('₹',lc)});
-  const tl=document.getElementById('bt-trade-list');
-  if(!d.trades.length){tl.innerHTML=`<div class="empty-state" style="padding:30px;">No completed trades found. Try 1 Year or 2 Years.</div>`;return;}
-  tl.innerHTML=d.trades.map(t=>{
-    const pc=t.result==='WIN'?'c-green':'c-red';
-    return`<div class="bt-trade-row">
-      <span style="font-size:10px;">${t.buy_date}</span>
-      <span style="font-size:10px;">${t.sell_date}</span>
-      <span>₹${fmt(t.buy_price)}</span>
-      <span>₹${fmt(t.sell_price)}</span>
-      <span class="${pc}" style="font-weight:500;">${t.pnl>=0?'+':''}${t.pnl}%</span>
-      <span><span class="badge ${t.result==='WIN'?'green':'red'}">${t.result}</span></span>
-      <span>${exitBadge(t.exit_reason)}</span>
-    </div>`;
-  }).join('');
-  document.getElementById('bt-results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ─── PORTFOLIO ─── */
